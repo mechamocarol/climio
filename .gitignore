@@ -33,6 +33,12 @@ yarn-error.*
 # local env files
 .env*.local
 
+# Claude Code personal settings
+.claude/settings.local.json
+
+# local design reference, not versioned
+/docs/design/
+
 # typescript
 *.tsbuildinfo
 

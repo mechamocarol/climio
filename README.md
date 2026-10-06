@@ -1,60 +1,70 @@
-# climio
+# Climio
 
-Find your best time to go.
+Climio is a React Native application designed to help users identify a suitable time of day for an outdoor activity based on weather conditions.
 
-# Welcome to your Expo app 👋
+## Overview
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+The repository currently contains the project foundation: tooling, folder structure, and documentation placeholders. Product behavior is not implemented yet.
 
-## Get started
+## Tech Stack
 
-1. Install dependencies
+- React Native with Expo
+- TypeScript (strict)
+- Expo Router
+- NativeWind
+- TanStack Query
+- Zustand
+- Zod
+- React Hook Form
+- Jest
+- React Native Testing Library
 
-   ```bash
-   npm install
-   ```
+## Architecture
 
-2. Start the app
+Presentation → Application → Domain → Infrastructure.
 
-   ```bash
-   npx expo start
-   ```
+Business logic is meant to stay independent of React Native and external APIs. Detailed decisions are TODO. See [docs/development/architecture.md](docs/development/architecture.md).
 
-In the output, you'll find options to open the app in a
+## Project Structure
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```text
+src/
+├── app/                 # Expo Router routes only
+├── providers/           # AppProviders, RepositoriesProvider
+├── features/            # activity, plan, location, weather, recommendation
+├── shared/              # components, theme, utils
+└── infrastructure/api/
+tests/
+├── unit/
+├── integration/
+└── fixtures/
+docs/
+├── product/mvp/
+└── development/
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Feature modules are placeholders. `src/app` is reserved for Expo Router screens.
 
-### Other setup steps
+## Development
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+```bash
+npm install
+npm start
+```
 
-## Learn more
+Then open the project in Expo Go, an iOS simulator, an Android emulator, or the web bundler.
 
-To learn more about developing your project with Expo, look at the following resources:
+## Testing
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+```bash
+npm test
+npm run typecheck
+```
 
-## Join the community
+## Documentation
 
-Join our community of developers creating universal apps.
+Product refinement and business rules live under `docs/product/mvp/`. Architecture and AI usage notes live under `docs/development/`.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+## AI-assisted development
+
+See [docs/development/ai-usage.md](docs/development/ai-usage.md). TODO.

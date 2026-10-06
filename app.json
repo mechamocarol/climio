@@ -1,11 +1,11 @@
 {
   "expo": {
-    "name": "ana-carolina-dev",
-    "slug": "ana-carolina-dev",
+    "name": "Climio",
+    "slug": "climio",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "anacarolinadev",
+    "scheme": "climio",
     "userInterfaceStyle": "automatic",
     "ios": {
       "icon": "./assets/expo.icon"
@@ -20,6 +20,7 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
+      "bundler": "metro",
       "output": "static",
       "favicon": "./assets/images/favicon.png"
     },

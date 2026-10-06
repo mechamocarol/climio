@@ -1,0 +1,47 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-blue: 126 178 221;
+  --color-blue-deep: 78 134 181;
+  --color-blue-soft: 206 231 230;
+  --color-green: 100 135 103;
+  --color-green-bright: 125 201 94;
+  --color-gray: 191 192 192;
+  --color-ink: 24 48 44;
+  --color-ink-soft: 95 113 109;
+  --color-canvas: 245 248 244;
+  --color-surface: 255 255 255;
+  --color-surface-soft: 237 243 238;
+  --color-surface-blue: 233 244 246;
+  --color-line: 223 232 225;
+  --color-danger: 199 92 84;
+  --color-danger-soft: 248 231 227;
+  --color-warning: 197 139 56;
+  --color-warning-soft: 247 237 218;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 22px;
+  --radius-xl: 28px;
+}
+
+.dark {
+  --color-blue: 143 197 237;
+  --color-blue-deep: 78 134 181;
+  --color-blue-soft: 38 80 90;
+  --color-green: 141 182 145;
+  --color-green-bright: 125 201 94;
+  --color-gray: 132 147 143;
+  --color-ink: 237 246 239;
+  --color-ink-soft: 168 187 180;
+  --color-canvas: 16 32 29;
+  --color-surface: 23 42 38;
+  --color-surface-soft: 29 51 46;
+  --color-surface-blue: 25 52 58;
+  --color-line: 41 68 61;
+  --color-danger: 199 92 84;
+  --color-danger-soft: 64 41 37;
+  --color-warning: 197 139 56;
+  --color-warning-soft: 66 55 32;
+}
