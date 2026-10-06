@@ -1,7 +1,7 @@
 import { render } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
-import { AppProviders } from '@/app/providers/app-providers';
+import { AppProviders } from '@/providers/app-providers';
 
 describe('AppProviders', () => {
   it('renders its children', async () => {

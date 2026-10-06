@@ -24,6 +24,7 @@ React Native application built with Expo. Follow these rules when changing the p
 
 - Install packages with `npx expo install` so versions stay compatible with the Expo SDK in `package.json`.
 - Read versioned Expo docs for that SDK before using an Expo API.
-- Expo Router treats every `.ts` / `.tsx` file in its routes directory as a screen. Route files live in `src/routes`. Do not put providers, features, or domain code there.
-- The application shell (providers and future navigation composition) lives in `src/app`.
+- Expo Router treats every `.ts` / `.tsx` file in `src/app` as a screen. Do not put providers, features, or domain code there.
+- Application providers live in `src/providers`.
+- Style with NativeWind (`className`). Design tokens live in `src/shared/theme`.
 - Do not create or edit `ios/` and `android/` by hand. Native projects are generated from `app.json`.

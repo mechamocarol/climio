@@ -10,7 +10,10 @@ The repository currently contains the project foundation: tooling, folder struct
 
 - React Native with Expo
 - TypeScript (strict)
+- Expo Router
+- NativeWind
 - TanStack Query
+- Zustand
 - Zod
 - React Hook Form
 - Jest
@@ -20,24 +23,27 @@ The repository currently contains the project foundation: tooling, folder struct
 
 Presentation → Application → Domain → Infrastructure.
 
-Business logic is meant to stay independent of React Native and external APIs. Detailed decisions are TODO. See [docs/architecture.md](docs/architecture.md).
+Business logic is meant to stay independent of React Native and external APIs. Detailed decisions are TODO. See [docs/development/architecture.md](docs/development/architecture.md).
 
 ## Project Structure
 
 ```text
 src/
-├── app/                 # application shell (providers, navigation)
-├── routes/              # Expo Router screens
-├── features/            # location, weather, recommendation
-├── shared/
+├── app/                 # Expo Router routes only
+├── providers/           # AppProviders, RepositoriesProvider
+├── features/            # activity, plan, location, weather, recommendation
+├── shared/              # components, theme, utils
 └── infrastructure/api/
 tests/
 ├── unit/
-└── integration/
+├── integration/
+└── fixtures/
 docs/
+├── product/mvp/
+└── development/
 ```
 
-Feature modules are placeholders. `src/routes` exists because Expo Router cannot share its routes directory with non-screen modules.
+Feature modules are placeholders. `src/app` is reserved for Expo Router screens.
 
 ## Development
 
@@ -52,13 +58,13 @@ Then open the project in Expo Go, an iOS simulator, an Android emulator, or the 
 
 ```bash
 npm test
-npx tsc --noEmit
+npm run typecheck
 ```
 
 ## Documentation
 
-Product refinement, business rules, architecture, and AI usage notes live under `docs/`. Most of that content is still TODO.
+Product refinement and business rules live under `docs/product/mvp/`. Architecture and AI usage notes live under `docs/development/`.
 
 ## AI-assisted development
 
-See [docs/ai-usage.md](docs/ai-usage.md). TODO.
+See [docs/development/ai-usage.md](docs/development/ai-usage.md). TODO.
