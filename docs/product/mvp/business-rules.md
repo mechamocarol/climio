@@ -118,16 +118,18 @@ Cada atividade pode utilizar faixas próprias.
 
 Rajadas devem ser consideradas separadamente da velocidade média do vento.
 
-Score padronizado (0–3):
+Score padronizado (0–3) — interpretação contínua final:
 
 - ≤25 km/h → score 3 → excelente
-- 26–35 km/h → score 2 → impacto leve
-- 36–45 km/h → score 1 → impacto moderado
+- >25 e ≤35 km/h → score 2 → impacto leve
+- >35 e ≤45 km/h → score 1 → impacto moderado
 - >45 km/h → score 0 → condição desfavorável
+
+Rótulos inteiros equivalentes na documentação de atividades (26–35, 36–45) mapeiam para esses limiares contínuos. Diferente das faixas genéricas em §17.1, a rajada usa intervalos fechados à direita nos limiares 25 / 35 / 45 para que o score 0 e o bloqueio compartilhem o corte `>45`.
 
 O score de rajada pode participar da fórmula conforme o peso definido para cada atividade.
 
-Rajada **não** é bloqueio universal. Uma rajada >45 km/h só torna o período inelegível quando a atividade listar essa condição como bloqueio.
+Rajada **não** é bloqueio universal. Uma rajada **>45 km/h** (não ≥45) só torna o período inelegível quando a atividade listar essa condição como bloqueio.
 
 ---
 
@@ -372,7 +374,7 @@ Os mesmos dados devem sempre produzir o mesmo resultado.
 
 ---
 
-## 17.1 Valores decimais
+## 17.1 Valores decimais e faixas contínuas
 
 Usar os valores reais retornados pela API.
 
@@ -380,7 +382,26 @@ Não arredondar valores antes do cálculo do score.
 
 Exemplo: 25,5°C deve ser avaliado como 25,5°C, e não arredondado para 26°C.
 
-As faixas de score devem ser tratadas como intervalos contínuos.
+### Convenção de faixas inteiras legíveis
+
+As faixas documentadas em forma humana com inteiros (ex.: 15–25, 26–29, 36–45) representam **intervalos contínuos meio-abertos** baseados no próximo limite inteiro documentado:
+
+- 15–25 significa `15 ≤ valor < 26`
+- 26–29 significa `26 ≤ valor < 30`
+- 36–45 significa `36 ≤ valor < 46` **quando a faixa seguir esta convenção geral**
+
+Consequentemente:
+
+- 25,0 → primeira faixa
+- 25,5 → primeira faixa
+- 25,999 → primeira faixa
+- 26,0 → segunda faixa
+
+Faixas abertas adjacentes acompanham a mesma lógica. Exemplo: após 30–33 (`30 ≤ valor < 34`), o rótulo humano `>33` corresponde a `valor ≥ 34` na interpretação contínua. Após 41–60%, `>60%` corresponde a `valor ≥ 61`. Após ≤15 km/h de vento, a faixa contínua é `valor < 16`.
+
+O significado de negócio das faixas documentadas não muda: apenas torna-se explícita a interpretação para valores reais da API, evitando lacunas indefinidas entre inteiros consecutivos.
+
+**Exceção — rajadas (§8):** o score de rajada usa limiares contínuos fechados à direita (`≤25`, `>25 e ≤35`, `>35 e ≤45`, `>45`) para alinhar o score 0 ao bloqueio `rajada > 45 km/h`.
 
 ---
 
@@ -518,7 +539,7 @@ Cada período deve produzir um resultado conceitualmente equivalente a:
     temperature: ...,
     precipitation: ...,
     wind: ...,
-    gusts: ...,
+    gust: ...,
     uv: ...
   }
 }
@@ -529,7 +550,7 @@ A implementação pode adaptar a estrutura, desde que mantenha a separação ent
 - avaliação dos fatores;
 - score;
 - status;
-- fatores utilizados na explicação.
+- fatores utilizados na análise e que podem potencialmente servir de base para a explicação (nem todo fator analisado precisa ser exibido ao usuário).
 
 ---
 
@@ -1025,31 +1046,381 @@ Novas regras podem ser adicionadas futuramente, desde que sejam explícitas e te
 
 ## 26. Explicação da recomendação
 
-A explicação deve ser gerada a partir dos fatores que mais influenciaram o resultado.
+O objetivo principal do Climio é **encontrar e mostrar o melhor horário** para a atividade escolhida.
 
-Deve:
+A explicação existe para ajudar o usuário a entender **por que** aquele horário foi recomendado. Ela reforça a resposta principal — "qual é o melhor horário?" — e **não** compete visualmente nem conceitualmente com a recomendação.
 
-- mencionar a atividade;
-- indicar o horário recomendado;
-- explicar os principais fatores positivos;
-- explicar os principais fatores negativos quando relevante;
-- evitar informações que não contribuíram para a decisão.
+### Hierarquia de informação
+
+1. atividade escolhida;
+2. melhor horário recomendado;
+3. principais condições daquele horário;
+4. explicação de por que aquele período é uma boa escolha;
+5. alternativas, quando existirem.
+
+A explicação deve ser concisa e útil, evitando transformar a recomendação em uma lista extensa de dados meteorológicos.
+
+### Separação de responsabilidades
+
+- O **Recommendation Engine** analisa os dados meteorológicos e escolhe a melhor janela (e alternativas, quando aplicável).
+- A **explicação** é derivada do resultado do engine após a decisão já tomada.
+- A explicação **nunca** altera score, ranking, status, bloqueios ou a recomendação escolhida.
+- O domínio expõe fatores **semânticos** (identificadores de fator / classificação), **sem** copy específica de interface.
+- A camada de **apresentação/UI** transforma esses fatores estruturados em textos amigáveis ao usuário.
+
+### Categorias de fatores
+
+A explicação pode apresentar fatores classificados como:
+
+- positivos;
+- neutros;
+- negativos.
+
+Essas três categorias **não são obrigatórias**.
+
+Uma recomendação pode ter somente fatores positivos; positivos e neutros; positivos e negativos; as três categorias; ou qualquer outra combinação válida das categorias que realmente existam no resultado.
+
+- Categorias sem fatores devem permanecer **vazias**.
+- A interface **não** deve exibir seções vazias (por exemplo, não mostrar "Fatores negativos" quando não houver nenhum).
+- **Não** criar fatores artificiais apenas para preencher uma categoria.
+
+Exemplos conceituais (textos ilustrativos de apresentação — fora do domínio):
+
+1. Positivos: temperatura agradável, baixa chance de chuva · Neutros: vento moderado · Negativos: nenhum → a UI mostra apenas positivos e neutros.
+2. Positivos: temperatura agradável · Neutros: nenhum · Negativos: vento forte → a UI mostra apenas positivos e negativos.
+
+### Etapas da Parte C7
+
+A construção da explicação é dividida em etapas:
+
+- **C7.1** — agregação dos scores por fator da `RecommendationWindow` (definida abaixo);
+- **C7.2** — classificação semântica do score agregado em positive / neutral / negative (definida abaixo);
+- **C7.3** — construção da explicação estruturada a partir dos fatores classificados (definida abaixo).
+
+### C7.1 — Agregação dos fatores da janela
+
+A explicação deve representar a `RecommendationWindow` **como um todo**, e não uma hora isolada.
+
+O C7.1 recebe uma `RecommendationWindow` já construída pelo Recommendation Engine. Ele:
+
+- **não** reconstrói a janela;
+- **não** recalcula o score da janela;
+- **não** altera os `AnalyzedPeriod`;
+- **não** altera timestamps, status ou blocking;
+- **não** altera ranking, recomendação ou alternativas.
+
+A agregação existe exclusivamente para produzir dados que posteriormente poderão ser usados na explicação (C7.2 / C7.3).
+
+#### Cálculo
+
+Para cada fator efetivamente presente nos `AnalyzedPeriod.factors` da `RecommendationWindow`:
+
+```text
+aggregatedFactorScore =
+  média aritmética dos scores daquele fator
+  nos períodos em que o fator está presente
+```
+
+A média **não** deve ser arredondada. O resultado da agregação pode ser decimal.
+
+A classificação positive / neutral / negative **não** faz parte do C7.1; será definida no C7.2. O C7.1 apenas agrega os scores.
+
+#### Fatores ausentes
+
+Fatores ausentes **não** devem ser tratados como score `0`.
+
+Somente os períodos que possuem determinado fator participam da média daquele fator. Fatores ausentes:
+
+- não entram no cálculo;
+- não devem gerar valores artificiais;
+- não devem ser inferidos a partir de outros dados.
 
 Exemplo:
 
-"Para corrida, o melhor período é das 7h às 9h. A temperatura estará agradável, com baixa chance de chuva e vento leve."
+```text
+17h: temperature = 3, precipitation = 3
+18h: temperature = 2
+19h: temperature = 3, precipitation = 1
+
+temperature   = (3 + 2 + 3) / 3 = 2,666...
+precipitation = (3 + 1) / 2     = 2
+```
+
+A ausência de `precipitation` às 18h **não** representa `precipitation = 0`.
+
+#### Score zero é válido
+
+O valor `0` é um score real e deve participar normalmente da média. Isso não deve ser confundido com a ausência do fator.
+
+Exemplo:
+
+```text
+17h: wind = 0
+18h: wind = 3
+
+wind = (0 + 3) / 2 = 1,5
+```
+
+#### Exemplo conceitual de agregação
+
+`RecommendationWindow` com fatores por hora:
+
+```text
+temperature:   [3, 3, 2]
+precipitation: [3, 3, 3]
+wind:          [2, 3, 3]
+```
+
+Scores agregados:
+
+```text
+temperature:   (3 + 3 + 2) / 3 = 2,666...
+precipitation: (3 + 3 + 3) / 3 = 3
+wind:          (2 + 3 + 3) / 3 = 2,666...
+```
+
+A classificação desses valores agregados **não** faz parte do C7.1; ver C7.2.
+
+### C7.2 — Classificação do score agregado
+
+O C7.2 classifica semanticamente o **score agregado** produzido pelo C7.1.
+
+- C7.1 = agregação dos scores por fator;
+- C7.2 = classificação semântica do score agregado;
+- C7.3 = organização dos fatores classificados em uma estrutura semântica de explicação.
+
+#### Limites contínuos
+
+A classificação é aplicada ao valor numérico já agregado, **sem** recalcular a média e **sem** arredondar:
+
+```text
+score agregado >= 2.5                 → positive
+score agregado >= 1.5 e < 2.5         → neutral
+score agregado < 1.5                  → negative
+```
+
+Consequentemente:
+
+- exatamente `2.5` → positive;
+- exatamente `1.5` → neutral;
+- valores abaixo de `1.5` → negative;
+- o valor `0` é válido e → negative.
+
+Exemplos:
+
+```text
+2,666... → positive
+2,0      → neutral
+1,666... → neutral
+1,333... → negative
+0        → negative
+```
+
+#### Escopo do C7.2
+
+O C7.2:
+
+- recebe um score numérico já agregado;
+- **não** recalcula a média;
+- **não** arredonda o valor;
+- **não** classifica fator ausente (ausência não se transforma em zero);
+- **não** decide quais fatores serão exibidos;
+- **não** cria textos de explicação;
+- **não** define quantidade nem ordem de exibição dos fatores;
+- **não** altera score, status, blocking, recomendação ou alternativas.
+
+### C7.3 — Construção da explicação estruturada
+
+O C7.3 transforma:
+
+1. os scores agregados produzidos pelo C7.1 (`AggregatedFactorScores`);
+2. as classificações produzidas pelo C7.2 (`AggregatedFactorClassification`);
+
+em uma estrutura semântica de explicação (`RecommendationExplanation`).
+
+Fluxo conceitual:
+
+```text
+RecommendationWindow
+        ↓
+C7.1 — aggregateWindowFactors
+        ↓
+AggregatedFactorScores
+        ↓
+C7.2 — classifyAggregatedFactorScore
+        ↓
+AggregatedFactorClassification
+        ↓
+C7.3 — construção da explicação
+        ↓
+RecommendationExplanation
+```
+
+O C7.3 **não** produz texto para o usuário. A camada de apresentação/UI transforma os identificadores semânticos em copy amigável, ícones, labels e componentes.
+
+#### Estrutura
+
+A explicação estruturada representa três categorias:
+
+- `positiveFactors`
+- `neutralFactors`
+- `negativeFactors`
+
+Cada categoria contém apenas identificadores de `ScoreFactor` (por exemplo `temperature`, `precipitation`, `wind`).
+
+Exemplo conceitual:
+
+```text
+{
+  positiveFactors: ['temperature', 'precipitation'],
+  neutralFactors: ['wind'],
+  negativeFactors: []
+}
+```
+
+**Não** usar textos de UI no domínio (por exemplo "Temperatura agradável"). Esses textos pertencem à apresentação.
+
+#### Relação com C7.1 e C7.2
+
+O C7.3 usa exclusivamente o resultado das etapas anteriores.
+
+Ele **não** deve:
+
+- recalcular médias ou scores;
+- arredondar scores;
+- classificar novamente os scores nem duplicar os thresholds do C7.2;
+- analisar novamente dados meteorológicos;
+- alterar status, blocking, ranking, recommendation ou alternativas;
+- escolher outra `RecommendationWindow`;
+- criar fatores que não existem no resultado agregado.
+
+Conceitualmente, para cada fator presente em `AggregatedFactorScores`:
+
+```text
+classification = C7.2(score agregado)
+
+se positive → incluir em positiveFactors
+se neutral  → incluir em neutralFactors
+se negative → incluir em negativeFactors
+```
+
+#### Fatores ausentes
+
+Somente fatores efetivamente presentes no `AggregatedFactorScores` do C7.1 podem aparecer na explicação.
+
+Se um fator não estiver presente:
+
+- não classificá-lo;
+- não adicioná-lo a nenhuma categoria;
+- não tratá-lo como score `0`;
+- não inferi-lo a partir de outros fatores.
+
+#### Ordem determinística
+
+Dentro de cada categoria, usar a ordem canônica dos `ScoreFactor`:
+
+1. `temperature`
+2. `precipitation`
+3. `wind`
+4. `gust`
+5. `uv`
+
+Não ordenar por score, percentual, ordem dos períodos, ordem de inserção em objetos ou texto da UI.
+
+#### Duplicação
+
+Cada `ScoreFactor` aparece no máximo uma vez na explicação e pertence a exatamente uma categoria (positive, neutral ou negative).
+
+#### Categorias vazias
+
+No domínio, as três categorias fazem parte da estrutura. Uma categoria sem fatores é representada como array vazio (`[]`).
+
+A decisão de **não** renderizar uma categoria vazia pertence à UI. O domínio não remove propriedades nem decide apresentação.
+
+#### Quantidade e prioridade visual
+
+O C7.3 **não** limita a quantidade de fatores (não escolhe "os 2 melhores" etc.). Se cinco fatores estiverem presentes e classificados, os cinco podem fazer parte da estrutura.
+
+O C7.3 **não** define prioridade visual (destaque, título, ícone, badge, omissão por UX). A única ordem do domínio é a ordem canônica dos arrays.
+
+#### Relação com a RecommendationWindow
+
+A explicação representa a `RecommendationWindow` já escolhida pelo Recommendation Engine. O C7.3:
+
+- **não** reconstrói nem seleciona a janela;
+- **não** compara alternativas;
+- **não** usa alternativas para construir os fatores da explicação principal.
+
+A explicação justifica a decisão já tomada.
+
+#### Exemplos conceituais
+
+1. `temperature = 2,666...` → positive; `precipitation = 3` → positive; `wind = 1,8` → neutral:
+
+```text
+{
+  positiveFactors: ['temperature', 'precipitation'],
+  neutralFactors: ['wind'],
+  negativeFactors: []
+}
+```
+
+2. `temperature = 1,2` → negative; `precipitation = 2,1` → neutral; `wind = 2,8` → positive:
+
+```text
+{
+  positiveFactors: ['wind'],
+  neutralFactors: ['precipitation'],
+  negativeFactors: ['temperature']
+}
+```
+
+3. `temperature = 3`, `precipitation = 3` → ambos positive; demais ausentes:
+
+```text
+{
+  positiveFactors: ['temperature', 'precipitation'],
+  neutralFactors: [],
+  negativeFactors: []
+}
+```
+
+Não criar fatores artificiais para preencher categorias vazias.
+
+#### Caso `recommendation === null`
+
+A construção específica da explicação quando **não** há recomendação **não** faz parte do C7.3 desta etapa. A regra geral de ausência de recomendação permanece na seção 27 e deve ser tratada separadamente, se necessário.
+
+#### Separação de responsabilidades (resumo)
+
+- **C7.1** — agrega os scores dos fatores presentes na `RecommendationWindow`.
+- **C7.2** — classifica cada score agregado como positive, neutral ou negative.
+- **C7.3** — organiza os fatores classificados em uma estrutura semântica de explicação.
+- **Presentation/UI** — transforma identificadores semânticos em textos, ícones, labels e componentes.
+
+### Escopo ainda adiado (apresentação / UI)
+
+As decisões abaixo **ainda não estão definidas** neste documento e pertencem à camada de apresentação:
+
+- textos/copy amigáveis;
+- quantidade visual de fatores;
+- componentes e layout;
+- ícones;
+- ordenação visual diferente da ordem semântica canônica do domínio.
+
+Não inventar essas regras antecipadamente.
 
 ---
 
 ## 27. Explicação quando não houver recomendação
 
-Quando não houver horário adequado, explicar o principal motivo.
+Quando não houver horário adequado, explicar o principal motivo — sem inventar uma recomendação inadequada apenas para evitar um estado vazio.
 
-Exemplo:
+A ausência de recomendação também deve permanecer alinhada à separação de responsabilidades da seção 26: a decisão vem do engine; a explicação apenas comunica o motivo.
+
+Exemplo de copy de apresentação (fora do domínio):
 
 "Não encontramos um período ideal para corrida hoje. A principal dificuldade é a alta chance de chuva durante a tarde."
-
-A aplicação não deve recomendar um horário inadequado apenas para evitar um estado vazio.
 
 ---
 
@@ -1388,7 +1759,7 @@ recommendation
 + score
 + status
 + relevant factors
-+ explanation
++ structured explanation (optional positive / neutral / negative factors)
 ```
 
 Mais detalhadamente, o resultado deve permitir apresentar:
@@ -1398,8 +1769,8 @@ Mais detalhadamente, o resultado deve permitir apresentar:
 - status de cada período;
 - melhor janela (ou `null`);
 - até 3 alternativas elegíveis;
-- fatores relevantes;
-- explicação;
+- fatores relevantes à explicação (derivados do resultado; não influenciam a escolha);
+- explicação semântica com categorias opcionais positivo / neutro / negativo, com copy gerada na apresentação;
 - ausência de recomendação quando aplicável;
 - limitação de surfe quando a atividade for surfing.
 
@@ -1416,6 +1787,9 @@ Resumo das decisões fechadas antes da implementação do Recommendation Engine:
 - **Tempestade** = weather codes 95, 96, 97 e 99 (WMO / Open-Meteo); o Climio não depende exclusivamente de 96/99.
 - **Pet** → não existe penalidade adicional UV × temperatura; apenas os scores e pesos já definidos.
 - **Daylight** → tolerância de 5 pontos percentuais no score normalizado (`abs(diff) <= 5`); fora do score.
+- **Rajada** → score contínuo `≤25` / `>25 e ≤35` / `>35 e ≤45` / `>45`; bloqueio permanece **`rajada > 45 km/h`** (não ≥45).
+- **Faixas decimais** → faixas inteiras legíveis usam intervalos contínuos meio-abertos (§17.1); rajada segue os limiares explícitos de §8.
+- **Explicação** → justifica o melhor horário já escolhido; categorias positive / neutral / negative são opcionais; categorias vazias no domínio são `[]` (a UI decide não renderizá-las); não inventar fatores; não altera a recomendação; copy fica na apresentação; C7.1 (agregação), C7.2 (classificação `>= 2.5` / `>= 1.5` / `< 1.5`) e C7.3 (estrutura semântica `positiveFactors` / `neutralFactors` / `negativeFactors` na ordem canônica dos `ScoreFactor`) já definidos; decisões de apresentação/UI permanecem pendentes.
 - **Identificação ambígua de atividade** → exige seleção manual; sem NLP complexo.
 - **Interpretação ambígua de data** → exige seleção manual; o engine recebe a data já resolvida.
 
