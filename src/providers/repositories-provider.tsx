@@ -5,11 +5,14 @@ import {
   type ReactNode,
 } from 'react';
 
+import { openMeteoLocationRepository } from '@/features/location/data/open-meteo-location-repository';
+import type { LocationRepository } from '@/features/location/domain/location-repository';
 import { openMeteoWeatherRepository } from '@/features/weather/data/open-meteo-weather-repository';
 import type { WeatherRepository } from '@/features/weather/domain/weather-repository';
 
 export type Repositories = Readonly<{
   weather: WeatherRepository;
+  location: LocationRepository;
 }>;
 
 type RepositoriesProviderProps = {
@@ -22,7 +25,7 @@ const RepositoriesContext = createContext<Repositories | null>(null);
 
 /**
  * Minimal repository injection for application hooks.
- * Defaults to the Open-Meteo weather repository; overrides are for tests.
+ * Defaults to Open-Meteo weather and location repositories; overrides are for tests.
  */
 export function RepositoriesProvider({
   children,
@@ -31,8 +34,9 @@ export function RepositoriesProvider({
   const value = useMemo<Repositories>(
     () => ({
       weather: repositories?.weather ?? openMeteoWeatherRepository,
+      location: repositories?.location ?? openMeteoLocationRepository,
     }),
-    [repositories?.weather],
+    [repositories?.weather, repositories?.location],
   );
 
   return (
@@ -53,4 +57,17 @@ export function useWeatherRepository(): WeatherRepository {
   }
 
   return context.weather;
+}
+
+/** Returns the injected LocationRepository. */
+export function useLocationRepository(): LocationRepository {
+  const context = useContext(RepositoriesContext);
+
+  if (context === null) {
+    throw new Error(
+      'useLocationRepository must be used within a RepositoriesProvider',
+    );
+  }
+
+  return context.location;
 }
