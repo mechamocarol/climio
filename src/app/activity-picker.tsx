@@ -7,11 +7,16 @@ import {
   getActivityById,
 } from '@/features/activity/domain/activities';
 import { usePlanStore } from '@/features/plan/store/plan-store';
+import { useClimioTheme } from '@/providers/theme-provider';
 import { lightColors } from '@/shared/theme/tokens';
 import { ClimioIcon } from '@/shared/ui/climio-icon';
+import { ThemeToggle } from '@/shared/ui/theme-toggle';
+
+const onGreen = lightColors.surface;
 
 export default function ActivityPickerScreen() {
   const router = useRouter();
+  const { colors } = useClimioTheme();
   const activityId = usePlanStore((state) => state.activityId);
   const setActivityId = usePlanStore((state) => state.setActivityId);
   const selectedActivity =
@@ -22,14 +27,17 @@ export default function ActivityPickerScreen() {
       <View className="absolute -right-24 -top-28 h-60 w-60 rounded-full bg-blue opacity-15" />
 
       <View className="flex-1 px-5 pt-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-          className="mb-5 h-[42px] w-[42px] items-center justify-center rounded-md border border-line bg-surface"
-          onPress={() => router.back()}
-        >
-          <ClimioIcon name="arrow-left" size={18} color={lightColors.ink} />
-        </Pressable>
+        <View className="mb-5 flex-row items-center justify-between">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            className="h-[42px] w-[42px] items-center justify-center rounded-md border border-line bg-surface"
+            onPress={() => router.back()}
+          >
+            <ClimioIcon name="arrow-left" size={18} color={colors.ink} />
+          </Pressable>
+          <ThemeToggle />
+        </View>
 
         <Text className="font-sans text-[10px] font-extrabold uppercase tracking-[1.65px] text-green">
           Passo 1
@@ -48,7 +56,7 @@ export default function ActivityPickerScreen() {
               <ClimioIcon
                 name={selectedActivity.id}
                 size={22}
-                color={lightColors.surface}
+                color={onGreen}
               />
             </View>
             <View className="flex-1">
@@ -97,7 +105,7 @@ export default function ActivityPickerScreen() {
                   <ClimioIcon
                     name={item.id}
                     size={22}
-                    color={selected ? lightColors.surface : lightColors.green}
+                    color={selected ? onGreen : colors.green}
                   />
                 </View>
                 <Text className="flex-1 font-sans text-sm font-bold text-ink">
@@ -105,11 +113,7 @@ export default function ActivityPickerScreen() {
                 </Text>
                 {selected ? (
                   <View className="h-5 w-5 items-center justify-center rounded-full bg-green">
-                    <ClimioIcon
-                      name="check"
-                      size={12}
-                      color={lightColors.surface}
-                    />
+                    <ClimioIcon name="check" size={12} color={onGreen} />
                   </View>
                 ) : null}
               </Pressable>

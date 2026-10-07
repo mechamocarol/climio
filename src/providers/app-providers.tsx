@@ -7,6 +7,7 @@ import {
 } from '@/infrastructure/api/query-client';
 
 import { RepositoriesProvider } from '@/providers/repositories-provider';
+import { ThemeProvider } from '@/providers/theme-provider';
 
 type AppProvidersProps = {
   children: ReactNode;
@@ -19,7 +20,9 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      <RepositoriesProvider>{children}</RepositoriesProvider>
+      <ThemeProvider>
+        <RepositoriesProvider>{children}</RepositoriesProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
 }

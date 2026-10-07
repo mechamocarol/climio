@@ -13,8 +13,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import type { Location } from '@/features/location/domain/location';
 import { useSearchLocations } from '@/features/location/hooks/use-search-locations';
 import { usePlanStore } from '@/features/plan/store/plan-store';
+import { useClimioTheme } from '@/providers/theme-provider';
 import { lightColors } from '@/shared/theme/tokens';
 import { ClimioIcon } from '@/shared/ui/climio-icon';
+import { ThemeToggle } from '@/shared/ui/theme-toggle';
+
+const onGreen = lightColors.surface;
 
 function formatLocationSubtitle(location: Location): string {
   return [location.region, location.country].filter(Boolean).join(', ');
@@ -22,6 +26,7 @@ function formatLocationSubtitle(location: Location): string {
 
 export default function LocationPickerScreen() {
   const router = useRouter();
+  const { colors } = useClimioTheme();
   const [query, setQuery] = useState('');
   const selectedLocation = usePlanStore((state) => state.location);
   const setLocation = usePlanStore((state) => state.setLocation);
@@ -47,14 +52,17 @@ export default function LocationPickerScreen() {
       <View className="absolute -right-24 -top-28 h-60 w-60 rounded-full bg-blue opacity-15" />
 
       <View className="flex-1 px-5 pt-2">
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-          className="mb-5 h-[42px] w-[42px] items-center justify-center rounded-md border border-line bg-surface"
-          onPress={() => router.back()}
-        >
-          <ClimioIcon name="arrow-left" size={18} color={lightColors.ink} />
-        </Pressable>
+        <View className="mb-5 flex-row items-center justify-between">
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+            className="h-[42px] w-[42px] items-center justify-center rounded-md border border-line bg-surface"
+            onPress={() => router.back()}
+          >
+            <ClimioIcon name="arrow-left" size={18} color={colors.ink} />
+          </Pressable>
+          <ThemeToggle />
+        </View>
 
         <Text className="font-sans text-[10px] font-extrabold uppercase tracking-[1.65px] text-green">
           Passo 2
@@ -67,12 +75,12 @@ export default function LocationPickerScreen() {
         </Text>
 
         <View className="mb-4 min-h-[54px] flex-row items-center rounded-md border border-line bg-surface-soft px-4">
-          <ClimioIcon name="search" size={18} color={lightColors.inkSoft} />
+          <ClimioIcon name="search" size={18} color={colors.inkSoft} />
           <TextInput
             value={query}
             onChangeText={setQuery}
             placeholder="Ex: São Paulo"
-            placeholderTextColor={lightColors.gray}
+            placeholderTextColor={colors.gray}
             autoCapitalize="words"
             autoCorrect={false}
             className="ml-2.5 flex-1 font-sans text-sm text-ink"
@@ -84,11 +92,7 @@ export default function LocationPickerScreen() {
           <View className="mb-4 gap-3">
             <View className="flex-row items-center gap-3 rounded-lg border border-green bg-surface-soft px-3.5 py-3">
               <View className="h-10 w-10 items-center justify-center rounded-md bg-surface-blue">
-                <ClimioIcon
-                  name="location"
-                  size={18}
-                  color={lightColors.blue}
-                />
+                <ClimioIcon name="location" size={18} color={colors.blue} />
               </View>
               <View className="flex-1">
                 <Text className="font-sans text-[9px] font-extrabold uppercase tracking-[1.2px] text-green">
@@ -108,15 +112,14 @@ export default function LocationPickerScreen() {
               className="min-h-[48px] flex-row items-center justify-center rounded-lg bg-green px-5 active:opacity-90"
               onPress={() => router.push('/date-picker')}
             >
-              <Text className="font-sans text-[13px] font-extrabold text-surface">
+              <Text
+                className="font-sans text-[13px] font-extrabold"
+                style={{ color: onGreen }}
+              >
                 Continuar
               </Text>
               <View className="ml-2">
-                <ClimioIcon
-                  name="arrow-right"
-                  size={16}
-                  color={lightColors.surface}
-                />
+                <ClimioIcon name="arrow-right" size={16} color={onGreen} />
               </View>
             </Pressable>
           </View>
@@ -125,7 +128,7 @@ export default function LocationPickerScreen() {
         {showIdle ? (
           <View className="mt-4 items-center rounded-lg bg-surface-soft px-5 py-8">
             <View className="mb-3 h-[52px] w-[52px] items-center justify-center rounded-lg bg-surface">
-              <ClimioIcon name="location" size={22} color={lightColors.green} />
+              <ClimioIcon name="location" size={22} color={colors.green} />
             </View>
             <Text className="text-center font-sans text-sm font-bold text-ink">
               Digite o nome de uma cidade
@@ -139,7 +142,7 @@ export default function LocationPickerScreen() {
 
         {showLoading ? (
           <View className="mt-10 items-center gap-3">
-            <ActivityIndicator color={lightColors.blue} />
+            <ActivityIndicator color={colors.blue} />
             <Text className="font-sans text-sm text-ink-soft">
               Buscando cidades…
             </Text>
@@ -160,7 +163,7 @@ export default function LocationPickerScreen() {
         {showEmpty ? (
           <View className="mt-4 items-center rounded-lg bg-surface-soft px-5 py-8">
             <View className="mb-3 h-[52px] w-[52px] items-center justify-center rounded-lg bg-surface">
-              <ClimioIcon name="search" size={22} color={lightColors.green} />
+              <ClimioIcon name="search" size={22} color={colors.green} />
             </View>
             <Text className="text-center font-sans text-sm font-bold text-ink">
               Não encontramos essa cidade
@@ -200,7 +203,7 @@ export default function LocationPickerScreen() {
                     <ClimioIcon
                       name="location"
                       size={18}
-                      color={lightColors.blue}
+                      color={colors.blue}
                     />
                   </View>
                   <View className="flex-1">
@@ -217,7 +220,7 @@ export default function LocationPickerScreen() {
                     <ClimioIcon
                       name="check"
                       size={18}
-                      color={lightColors.green}
+                      color={colors.green}
                     />
                   ) : null}
                 </Pressable>
