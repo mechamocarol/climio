@@ -6,10 +6,7 @@ import type {
   WeatherRepository,
 } from '@/features/weather/domain/weather-repository';
 
-/**
- * Open-Meteo-backed WeatherRepository.
- * Orchestrates HTTP fetch → Zod parse → domain mapping only.
- */
+/** WeatherRepository: Open-Meteo forecast → Zod → domain `HourlyWeather`. */
 export const openMeteoWeatherRepository: WeatherRepository = {
   async getHourlyForecast(
     input: GetHourlyForecastInput,

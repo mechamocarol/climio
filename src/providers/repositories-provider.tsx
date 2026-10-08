@@ -17,16 +17,13 @@ export type Repositories = Readonly<{
 
 type RepositoriesProviderProps = {
   children: ReactNode;
-  /** Partial overrides for tests or alternate implementations. */
+  /** Test / alternate repository overrides. */
   repositories?: Partial<Repositories>;
 };
 
 const RepositoriesContext = createContext<Repositories | null>(null);
 
-/**
- * Minimal repository injection for application hooks.
- * Defaults to Open-Meteo weather and location repositories; overrides are for tests.
- */
+/** Injects weather and location repositories (Open-Meteo by default). */
 export function RepositoriesProvider({
   children,
   repositories,
@@ -46,7 +43,6 @@ export function RepositoriesProvider({
   );
 }
 
-/** Returns the injected WeatherRepository. */
 export function useWeatherRepository(): WeatherRepository {
   const context = useContext(RepositoriesContext);
 
@@ -59,7 +55,6 @@ export function useWeatherRepository(): WeatherRepository {
   return context.weather;
 }
 
-/** Returns the injected LocationRepository. */
 export function useLocationRepository(): LocationRepository {
   const context = useContext(RepositoriesContext);
 

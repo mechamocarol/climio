@@ -1,7 +1,7 @@
 import type { DeviceCoordinates } from '@/features/location/data/get-current-device-location';
 import type { Location } from '@/features/location/domain/location';
 
-/** Subset of expo-location reverse-geocode fields used by Climio. */
+/** Reverse-geocode fields consumed when building a domain `Location`. */
 export type DevicePlaceLabels = Readonly<{
   city?: string | null;
   name?: string | null;

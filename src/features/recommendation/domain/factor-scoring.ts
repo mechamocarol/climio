@@ -41,7 +41,6 @@ export function scoreNumericValue(
   return null;
 }
 
-/** Temperature factor score from ActivityRules.temperatureBands. */
 export function scoreTemperature(
   rules: ActivityRules,
   temperatureCelsius: number | null,
@@ -49,10 +48,7 @@ export function scoreTemperature(
   return scoreNumericValue(temperatureCelsius, rules.temperatureBands);
 }
 
-/**
- * Precipitation factor score from precipitationProbability (%).
- * Uses ActivityRules.precipitationBands (probability bands, not mm/h).
- */
+/** Precipitation score from probability (%) bands — not amount (mm/h). */
 export function scorePrecipitation(
   rules: ActivityRules,
   precipitationProbabilityPercent: number | null,
@@ -60,7 +56,6 @@ export function scorePrecipitation(
   return scoreNumericValue(precipitationProbabilityPercent, rules.precipitationBands);
 }
 
-/** Wind factor score from wind speed (km/h). */
 export function scoreWind(
   rules: ActivityRules,
   windSpeedKmH: number | null,
@@ -68,10 +63,7 @@ export function scoreWind(
   return scoreNumericValue(windSpeedKmH, rules.windBands);
 }
 
-/**
- * Gust factor score from wind gust (km/h).
- * Returns null when the activity has no gust bands or the value is missing.
- */
+/** Gust score; null when the activity has no gust bands or the value is missing. */
 export function scoreGust(
   rules: ActivityRules,
   windGustKmH: number | null,
@@ -82,10 +74,7 @@ export function scoreGust(
   return scoreNumericValue(windGustKmH, rules.gustBands);
 }
 
-/**
- * UV factor score from UV index.
- * Returns null when the activity has no UV bands or the value is missing.
- */
+/** UV score; null when the activity has no UV bands or the value is missing. */
 export function scoreUv(
   rules: ActivityRules,
   uvIndex: number | null,

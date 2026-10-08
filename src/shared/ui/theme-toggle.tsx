@@ -3,10 +3,7 @@ import { Pressable } from 'react-native';
 import { useClimioTheme } from '@/providers/theme-provider';
 import { ClimioIcon } from '@/shared/ui/climio-icon';
 
-/**
- * Figma Make–inspired theme control: 42×42 bordered icon button.
- * Light shows moon (switch to dark); Dark shows sun (switch to light).
- */
+/** Toggles Light/Dark theme. */
 export function ThemeToggle() {
   const { theme, colors, toggleTheme } = useClimioTheme();
   const isLight = theme === 'light';

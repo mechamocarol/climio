@@ -23,9 +23,8 @@ export function hexToRgbChannels(hex: string): string {
 }
 
 /**
- * Runtime CSS variable overrides for Climio tokens.
- * Applied via NativeWind `vars()` so className tokens (bg-canvas, text-ink, …)
- * actually switch when the manual theme toggles — `.dark` alone is unreliable on native.
+ * Runtime CSS variable map for Climio tokens (NativeWind `vars()`).
+ * Required so className tokens follow the manual theme toggle on native.
  */
 export function getThemeCssVars(theme: ThemeName) {
   const colors = colorsByTheme[theme];

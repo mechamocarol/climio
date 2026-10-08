@@ -11,12 +11,10 @@ import { useClimioTheme } from '@/providers/theme-provider';
 import { lightColors } from '@/shared/theme/tokens';
 import { ClimioIcon } from '@/shared/ui/climio-icon';
 
-/** White glyph/text on green brand fills — same in Light and Dark (Figma). */
+/** White glyph/text on green brand fills — same in Light and Dark. */
 const onGreen = lightColors.surface;
 
-/**
- * App entry: welcome only on first access; later launches go straight to home.
- */
+/** Entry: welcome on first launch; otherwise go to Home. */
 export default function EntryScreen() {
   const router = useRouter();
   const { colors } = useClimioTheme();

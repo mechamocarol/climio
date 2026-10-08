@@ -29,10 +29,7 @@ function isValidForecastInput(
   );
 }
 
-/**
- * Fetches hourly forecast for an explicit location and calendar date.
- * Does not read Plan/Location stores or run recommendation logic.
- */
+/** Hourly forecast for an explicit `{ latitude, longitude, date }` input. */
 export function useHourlyForecast(
   input: GetHourlyForecastInput | null | undefined,
 ) {

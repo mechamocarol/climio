@@ -1,8 +1,6 @@
 /**
- * Climio design tokens.
- * Source: Figma Make visual reference (docs/design — local only).
- * Light/Dark values pair with CSS variables in global.css.
- * Runtime theme selection lives in ThemeProvider + NativeWind colorScheme.
+ * Climio design tokens (Light/Dark).
+ * Paired with CSS variables in `global.css` and applied at runtime by ThemeProvider.
  */
 
 export const lightColors = {

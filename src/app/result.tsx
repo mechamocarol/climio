@@ -216,6 +216,19 @@ export default function ResultScreen() {
           </View>
         ) : null}
 
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Voltar para a Home"
+          className="mt-8 min-h-[54px] flex-row items-center justify-center rounded-lg bg-green px-5 active:opacity-90"
+          onPress={() => router.replace('/home')}
+        >
+          <Text
+            className="font-sans text-[14px] font-extrabold"
+            style={{ color: onGreen }}
+          >
+            Voltar para a Home
+          </Text>
+        </Pressable>
       </ScrollView>
     </ResultShell>
   );

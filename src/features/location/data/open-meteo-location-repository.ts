@@ -6,10 +6,7 @@ import type {
   SearchLocationsInput,
 } from '@/features/location/domain/location-repository';
 
-/**
- * Open-Meteo-backed LocationRepository.
- * Orchestrates HTTP fetch → Zod parse → domain mapping only.
- */
+/** LocationRepository: Open-Meteo geocoding → Zod → domain `Location`. */
 export const openMeteoLocationRepository: LocationRepository = {
   async searchLocations(input: SearchLocationsInput, signal?: AbortSignal) {
     const query = input.query.trim();

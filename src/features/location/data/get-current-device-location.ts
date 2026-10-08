@@ -1,9 +1,6 @@
 import * as ExpoLocation from 'expo-location';
 
-/**
- * Device GPS coordinates only.
- * Not a domain `Location` — reverse geocoding / timezone come in a later step.
- */
+/** Raw device coordinates before reverse geocode / timezone resolution. */
 export type DeviceCoordinates = Readonly<{
   latitude: number;
   longitude: number;
@@ -21,10 +18,7 @@ export type CurrentDeviceLocationResult =
       message?: string;
     }>;
 
-/**
- * Requests foreground location permission when needed and reads one GPS fix.
- * Does not reverse-geocode, touch Plan state, or build a domain `Location`.
- */
+/** Requests foreground permission if needed and reads a single GPS fix. */
 export async function getCurrentDeviceLocation(): Promise<CurrentDeviceLocationResult> {
   const permission = await ExpoLocation.requestForegroundPermissionsAsync();
 

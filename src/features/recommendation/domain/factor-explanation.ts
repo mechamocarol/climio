@@ -14,10 +14,8 @@ const SCORE_FACTORS: readonly ScoreFactor[] = [
 ];
 
 /**
- * Builds a structured RecommendationExplanation from aggregated factor scores.
- *
- * Uses C7.2 classification; does not recalculate, round, or invent factors.
- * Categories always exist (empty arrays when unused). Order is canonical.
+ * C7.3: maps aggregated factor scores into positive / neutral / negative lists.
+ * Does not recalculate scores; empty categories are preserved; order is canonical.
  */
 export function buildRecommendationExplanation(
   aggregatedFactorScores: AggregatedFactorScores,

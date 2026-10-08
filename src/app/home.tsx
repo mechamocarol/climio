@@ -29,10 +29,7 @@ import { ThemeToggle } from '@/shared/ui/theme-toggle';
 const onGreen = lightColors.surface;
 const QUICK_ACTIVITIES = listQuickActivities();
 
-/**
- * Plan home — activity, location and date before requesting a recommendation.
- * Natural language / voice inputs are visual placeholders for a later step.
- */
+/** Home: compose Activity + Location + Date before requesting a recommendation. */
 export default function HomeScreen() {
   const router = useRouter();
   const { colors } = useClimioTheme();

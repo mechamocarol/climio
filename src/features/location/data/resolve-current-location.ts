@@ -49,8 +49,8 @@ async function reverseGeocodePlace(
 }
 
 /**
- * Resolves the device GPS fix into a domain `Location` for Plan selection.
- * After GPS, reverse geocode and Open-Meteo timezone run in parallel.
+ * GPS → domain `Location`.
+ * After coordinates exist, reverse geocode and timezone resolve in parallel.
  */
 export async function resolveCurrentLocation(
   signal?: AbortSignal,

@@ -32,9 +32,7 @@ function capitalizeMonth(monthLabel: string): string {
   return monthLabel.charAt(0).toUpperCase() + monthLabel.slice(1);
 }
 
-/**
- * Date picker bottom sheet — matches fluxo-4 ("Para quando?").
- */
+/** Bottom sheet for selecting the plan calendar date. */
 export function DateBottomSheet({
   visible,
   selectedDate,

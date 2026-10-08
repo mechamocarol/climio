@@ -3,7 +3,7 @@ import { httpRequest } from '@/infrastructure/api/http-client';
 const OPEN_METEO_GEOCODING_ENDPOINT =
   'https://geocoding-api.open-meteo.com/v1/search';
 
-/** Maximum number of geocoding matches requested for the MVP search UI. */
+/** Max geocoding results returned to the location search UI. */
 export const OPEN_METEO_GEOCODING_RESULT_COUNT = 5;
 
 export type OpenMeteoGeocodingApiInput = Readonly<{

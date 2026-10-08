@@ -5,10 +5,7 @@ function readOptionalString(value: string | null | undefined): string | null {
   return value === undefined || value === null ? null : value;
 }
 
-/**
- * Maps a validated Open-Meteo Geocoding DTO to domain `Location` rows.
- * Missing `results` becomes an empty list.
- */
+/** Maps a validated geocoding DTO to domain `Location[]`. */
 export function mapOpenMeteoGeocodingToLocations(
   response: OpenMeteoGeocodingResponse,
 ): Location[] {

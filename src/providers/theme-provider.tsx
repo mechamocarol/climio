@@ -52,11 +52,8 @@ function isJestEnvironment(): boolean {
 }
 
 /**
- * Manual Climio Light/Dark theme.
- *
- * Token CSS variables live on a plain View (NativeWind `vars()`).
- * Transition: cover the screen with the previous canvas color, swap the
- * theme underneath, then fade the veil out — a visible crossfade.
+ * Manual Light/Dark theme via NativeWind `vars()`.
+ * Crossfades by veiling the previous canvas color while tokens swap underneath.
  */
 export function ThemeProvider({
   children,

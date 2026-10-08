@@ -26,10 +26,7 @@ export function createInitialPlanState(
   };
 }
 
-/**
- * Thin client store for Activity + Location + Date selections.
- * Holds UI state only — no API, Query, or recommendation logic.
- */
+/** Session Plan selections (Activity + Location + Date). No server state. */
 export const usePlanStore = create<PlanStore>((set) => ({
   ...createInitialPlanState(),
   setActivityId: (activityId) => set({ activityId }),

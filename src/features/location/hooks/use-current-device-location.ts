@@ -18,8 +18,8 @@ export type CurrentDeviceLocationError = Readonly<{
 }>;
 
 /**
- * Imperative resolution of the device GPS into a domain `Location`.
- * Does not write to Plan / Zustand — callers pass the result to `onSelect`.
+ * Resolves the device GPS into a domain `Location` on demand.
+ * Callers own Plan updates (typically via `onSelect`).
  */
 export function useCurrentDeviceLocation() {
   const [status, setStatus] = useState<CurrentDeviceLocationStatus>('idle');

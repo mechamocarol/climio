@@ -48,8 +48,8 @@ function currentLocationErrorMessage(
 }
 
 /**
- * Location picker bottom sheet matching the home prototype.
- * Manual search and "Usar minha localização" both end in domain `Location`.
+ * Location picker: city search or current device location.
+ * Both paths resolve to the same domain `Location`.
  */
 export function LocationBottomSheet({
   visible,

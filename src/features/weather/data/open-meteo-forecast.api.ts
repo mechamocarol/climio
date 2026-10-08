@@ -2,7 +2,7 @@ import { httpRequest } from '@/infrastructure/api/http-client';
 
 const OPEN_METEO_FORECAST_ENDPOINT = 'https://api.open-meteo.com/v1/forecast';
 
-/** Fixed Climio MVP hourly variables — not derived from activity rules. */
+/** Hourly variables requested for every forecast (independent of activity rules). */
 export const OPEN_METEO_FORECAST_HOURLY_VARIABLES = [
   'temperature_2m',
   'apparent_temperature',
@@ -29,10 +29,7 @@ function assertCalendarDate(date: string): void {
   }
 }
 
-/**
- * Builds the Open-Meteo Forecast URL for a single calendar day.
- * `date` is used as both start_date and end_date without Date parsing.
- */
+/** Forecast URL for one calendar day (`start_date` = `end_date` = `date`). */
 export function buildOpenMeteoForecastUrl(input: OpenMeteoForecastApiInput): string {
   assertCalendarDate(input.date);
 
@@ -46,10 +43,7 @@ export function buildOpenMeteoForecastUrl(input: OpenMeteoForecastApiInput): str
   return url.toString();
 }
 
-/**
- * Fetches the raw Open-Meteo Forecast payload.
- * Validation and domain mapping happen outside this data source.
- */
+/** Raw Open-Meteo forecast payload (validate/map outside this module). */
 export async function fetchOpenMeteoForecast(
   input: OpenMeteoForecastApiInput,
   signal?: AbortSignal,

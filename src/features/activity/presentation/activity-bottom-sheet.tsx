@@ -24,10 +24,7 @@ type ActivityBottomSheetProps = {
   onClose: () => void;
 };
 
-/**
- * Modal bottom sheet with a 2-column activity grid (Figma prototype).
- * Presentation-only — selection is handled by the parent.
- */
+/** Activity catalog picker presented as a bottom sheet. */
 export function ActivityBottomSheet({
   visible,
   selectedActivityId,

@@ -30,10 +30,7 @@ type ClimioIconProps = {
   color?: string;
 };
 
-/**
- * Lightweight stroke icons aligned with the Figma Make visual reference.
- * Presentation-only — not part of domain contracts.
- */
+/** Shared stroke icons for Climio UI. */
 export function ClimioIcon({
   name,
   size = 20,

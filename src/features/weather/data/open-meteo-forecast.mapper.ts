@@ -29,10 +29,7 @@ function readIsDaylight(
   return value === 1;
 }
 
-/**
- * Maps a validated Open-Meteo Forecast DTO to domain `HourlyWeather` rows.
- * Pure transformation only — no scoring, filtering, or timezone conversion.
- */
+/** Maps a validated forecast DTO to `HourlyWeather[]` (no scoring or filtering). */
 export function mapOpenMeteoForecastToHourlyWeather(
   response: OpenMeteoForecastResponse,
 ): HourlyWeather[] {

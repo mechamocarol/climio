@@ -12,10 +12,7 @@ import { recommendActivity } from '@/features/recommendation/domain/recommendati
 import type { RecommendationResult } from '@/features/recommendation/domain/types';
 import { useHourlyForecast } from '@/features/weather/hooks/use-hourly-forecast';
 
-/**
- * Thin orchestration: Plan → forecast input → Open-Meteo → recommendActivity.
- * Keeps API/query and engine composition out of screen components.
- */
+/** Plan → hourly forecast query → `recommendActivity` (keeps screens free of composition). */
 export function usePlanRecommendation() {
   const activityId = usePlanStore((state) => state.activityId);
   const location = usePlanStore((state) => state.location);

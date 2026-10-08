@@ -24,9 +24,7 @@ function formatLocationLabel(
   return region ? `${name}, ${region}` : name;
 }
 
-/**
- * Plan review screen — matches fluxo-5.
- */
+/** Plan review before analysis; also warms the hourly forecast cache. */
 export default function SummaryScreen() {
   const router = useRouter();
   const { colors } = useClimioTheme();
@@ -36,7 +34,6 @@ export default function SummaryScreen() {
 
   const plan = { activityId, location, date };
   const planReady = isPlanReadyForRecommendation(plan);
-  // Same query key / repository as Result — warm cache while the user reviews.
   useHourlyForecast(toHourlyForecastInput(plan));
 
   const activity =

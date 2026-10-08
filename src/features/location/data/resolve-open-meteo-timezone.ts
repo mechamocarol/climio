@@ -11,10 +11,7 @@ const openMeteoTimezoneResponseSchema = z.object({
 
 export type ResolveOpenMeteoTimezoneInput = DeviceCoordinates;
 
-/**
- * Builds a minimal Open-Meteo Forecast URL used only to resolve IANA timezone.
- * Does not fetch Climio hourly weather variables.
- */
+/** Minimal Open-Meteo URL used solely to resolve IANA timezone for coordinates. */
 export function buildOpenMeteoTimezoneUrl(
   input: ResolveOpenMeteoTimezoneInput,
 ): string {
@@ -27,10 +24,7 @@ export function buildOpenMeteoTimezoneUrl(
   return url.toString();
 }
 
-/**
- * Resolves the IANA timezone for coordinates via Open-Meteo `timezone=auto`.
- * Kept separate from the weather repository on purpose.
- */
+/** IANA timezone for coordinates via Open-Meteo `timezone=auto`. */
 export async function resolveOpenMeteoTimezone(
   input: ResolveOpenMeteoTimezoneInput,
   signal?: AbortSignal,
