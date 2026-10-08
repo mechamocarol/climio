@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import {
   ActivityIndicator,
   Dimensions,
@@ -13,7 +13,9 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import type { ResolveCurrentLocationFailureReason } from '@/features/location/data/resolve-current-location';
 import type { Location } from '@/features/location/domain/location';
+import { useCurrentDeviceLocation } from '@/features/location/hooks/use-current-device-location';
 import { useSearchLocations } from '@/features/location/hooks/use-search-locations';
 import {
   formatLocationDetail,
@@ -30,9 +32,24 @@ type LocationBottomSheetProps = {
   onClose: () => void;
 };
 
+function currentLocationErrorMessage(
+  reason: ResolveCurrentLocationFailureReason,
+): string {
+  switch (reason) {
+    case 'permission_denied':
+      return 'Permissão de localização negada. Ative nas configurações do dispositivo e tente de novo.';
+    case 'position_unavailable':
+      return 'Não foi possível obter o GPS. Verifique se a localização está ativa e tente de novo.';
+    case 'reverse_geocode_failed':
+      return 'Não foi possível identificar o local. Tente de novo ou busque uma cidade.';
+    case 'timezone_unavailable':
+      return 'Não foi possível resolver o fuso horário do local. Tente de novo.';
+  }
+}
+
 /**
  * Location picker bottom sheet matching the home prototype.
- * GPS row is visible but not wired yet.
+ * Manual search and "Usar minha localização" both end in domain `Location`.
  */
 export function LocationBottomSheet({
   visible,
@@ -45,18 +62,11 @@ export function LocationBottomSheet({
   const [query, setQuery] = useState('');
   const [recent, setRecent] = useState(() => [...listRecentLocations()]);
   const search = useSearchLocations(query);
+  const currentLocation = useCurrentDeviceLocation();
 
   const windowHeight = Dimensions.get('window').height;
   const sheetMaxHeight = windowHeight * 0.78;
   const sheetMinHeight = windowHeight * 0.52;
-
-  useEffect(() => {
-    if (visible) {
-      setRecent([...listRecentLocations()]);
-    } else {
-      setQuery('');
-    }
-  }, [visible]);
 
   const trimmedQuery = query.trim();
   const showIdle = trimmedQuery.length === 0;
@@ -69,18 +79,41 @@ export function LocationBottomSheet({
   const showResults =
     !showIdle && !search.isFetching && search.isSuccess && results.length > 0;
 
+  function handleClose() {
+    setQuery('');
+    onClose();
+  }
+
   function handleSelect(location: Location) {
     rememberRecentLocation(location);
     setRecent([...listRecentLocations()]);
+    setQuery('');
     onSelect(location);
   }
+
+  async function handleUseCurrentLocation() {
+    if (currentLocation.isLoading) {
+      return;
+    }
+
+    const location = await currentLocation.requestCurrentLocation();
+    if (location !== null) {
+      handleSelect(location);
+    }
+  }
+
+  const currentLocationSubtitle = currentLocation.isLoading
+    ? 'Obtendo sua localização…'
+    : currentLocation.error !== null
+      ? currentLocationErrorMessage(currentLocation.error.reason)
+      : 'Usar a localização atual do dispositivo';
 
   return (
     <Modal
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <KeyboardAvoidingView
         className="flex-1 justify-end"
@@ -92,7 +125,7 @@ export function LocationBottomSheet({
           accessibilityLabel="Fechar busca de local"
           className="absolute inset-0"
           style={{ backgroundColor: 'rgba(24, 48, 44, 0.45)' }}
-          onPress={onClose}
+          onPress={handleClose}
         />
 
         <View
@@ -129,7 +162,7 @@ export function LocationBottomSheet({
                 borderColor: colors.line,
                 backgroundColor: colors.surface,
               }}
-              onPress={onClose}
+              onPress={handleClose}
             >
               <ClimioIcon name="close" size={15} color={colors.ink} />
             </Pressable>
@@ -155,15 +188,26 @@ export function LocationBottomSheet({
 
           <Pressable
             accessibilityRole="button"
-            accessibilityState={{ disabled: true }}
-            disabled
-            className="mb-4 min-h-[60px] flex-row items-center gap-3 opacity-70"
+            accessibilityLabel="Usar minha localização"
+            accessibilityState={{ disabled: currentLocation.isLoading }}
+            disabled={currentLocation.isLoading}
+            className="mb-4 min-h-[60px] flex-row items-center gap-3"
+            style={{
+              opacity: currentLocation.isLoading ? 0.7 : 1,
+            }}
+            onPress={() => {
+              void handleUseCurrentLocation();
+            }}
           >
             <View
               className="h-10 w-10 items-center justify-center rounded-[12px]"
               style={{ backgroundColor: colors.surfaceBlue }}
             >
-              <ClimioIcon name="location" size={18} color={colors.blue} />
+              {currentLocation.isLoading ? (
+                <ActivityIndicator color={colors.blue} />
+              ) : (
+                <ClimioIcon name="location" size={18} color={colors.blue} />
+              )}
             </View>
             <View className="flex-1">
               <Text
@@ -174,12 +218,23 @@ export function LocationBottomSheet({
               </Text>
               <Text
                 className="mt-0.5 font-sans text-[12px]"
-                style={{ color: colors.inkSoft }}
+                style={{
+                  color:
+                    currentLocation.error !== null
+                      ? colors.danger
+                      : colors.inkSoft,
+                }}
               >
-                Ative a localização do dispositivo
+                {currentLocationSubtitle}
               </Text>
             </View>
-            <ClimioIcon name="chevron-right" size={18} color={colors.inkSoft} />
+            {!currentLocation.isLoading ? (
+              <ClimioIcon
+                name="chevron-right"
+                size={18}
+                color={colors.inkSoft}
+              />
+            ) : null}
           </Pressable>
 
           <ScrollView

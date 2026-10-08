@@ -17,14 +17,16 @@ realizá-la** para responder a uma pergunta prática:
 
 > "Qual é o melhor horário para eu fazer isso?"
 
-A pessoa poderá informar o que deseja fazer por meio de uma seleção
-manual ou de uma entrada em linguagem natural, utilizando texto ou voz.
+No MVP entregue, a pessoa informa o que deseja fazer por meio de uma
+seleção manual no catálogo de atividades.
 
 A pessoa também poderá consultar as condições para o dia atual ou
 selecionar uma data futura disponível na previsão meteorológica.
 
-Quando autorizado, o Climio poderá utilizar a localização atual da pessoa
+Quando autorizado, o Climio pode utilizar a localização atual da pessoa
 como alternativa à busca manual de uma cidade.
+
+Entrada em linguagem natural e por voz ficaram fora do MVP entregue.
 
 A primeira versão do produto será desenvolvida como um MVP, com foco em
 validar essa proposta de valor de forma simples, clara e objetiva.
@@ -65,10 +67,10 @@ realizar a atividade e quando pretende realizá-la**, para descobrir, de
 forma rápida e clara, qual é o período mais adequado para aquela
 atividade.
 
-A pessoa poderá definir esses dados de forma manual ou utilizar uma
-entrada mais natural, informando por texto ou voz o que pretende fazer.
+No MVP, esses dados são definidos de forma manual (atividade no catálogo,
+localização por busca ou GPS, data no seletor).
 
-Quando autorizado, o Climio também poderá utilizar a localização atual
+Quando autorizado, o Climio também pode utilizar a localização atual
 da pessoa como alternativa à busca manual de uma cidade.
 
 Além da recomendação, o produto deve explicar os principais fatores que
@@ -102,13 +104,10 @@ Para isso, a primeira versão deverá permitir que a pessoa:
 
 ### **Dentro do escopo**
 
-- Seleção de atividades pré-estabelecidas.
-- Entrada de atividade por texto.
-- Entrada de atividade por voz.
-- Identificação da atividade informada a partir da linguagem utilizada.
+- Seleção de atividades pré-estabelecidas (catálogo).
 - Busca de cidades.
 - Seleção de uma cidade.
-- Uso opcional da localização atual.
+- Uso da localização atual do dispositivo (“Usar minha localização”).
 - Seleção de data.
 - Utilização do dia atual como data padrão.
 - Consulta de previsão meteorológica para a data selecionada.
@@ -117,6 +116,7 @@ Para isso, a primeira versão deverá permitir que a pessoa:
 - Identificação do melhor intervalo de horário.
 - Apresentação da recomendação.
 - Explicação dos fatores que influenciaram a recomendação.
+- Alternativas de horário.
 - Estados de carregamento.
 - Estados de erro.
 - Estados sem resultados.
@@ -139,37 +139,20 @@ Para isso, a primeira versão deverá permitir que a pessoa:
 Cada atividade possuirá critérios próprios para avaliar as condições
 meteorológicas.
 
-### **Formas de entrada**
+### **Formas de entrada (MVP entregue)**
 
-O Climio poderá oferecer dois caminhos principais:
+A pessoa seleciona atividade, localização e data por Bottom Sheets na
+Home:
 
-#### **Entrada rápida**
+- atividade — catálogo fixo;
+- localização — busca de cidade **ou** localização atual do dispositivo;
+- data — dia atual como padrão, com opção de outra data disponível na
+  previsão.
 
-A pessoa informa em linguagem natural o que deseja fazer, por texto ou
-voz.
+A ordem entre atividade, localização e data não é obrigatória.
 
-Exemplo:
-
-> "Quero andar de skate hoje."
-
-O Climio identifica a atividade correspondente e, caso a pessoa autorize,
-pode utilizar sua localização atual para realizar a consulta.
-
-Caso a pessoa informe uma data na própria entrada, ela poderá ser
-utilizada como data da consulta.
-
-Exemplo:
-
-> "Quero fazer um piquenique no domingo."
-
-#### **Entrada manual**
-
-A pessoa seleciona uma atividade e define manualmente a localização e a
-data da atividade.
-
-A ordem entre atividade, localização e data não deve ser obrigatória. A
-pessoa pode definir primeiro o que deseja fazer, onde pretende ir ou
-quando pretende realizar a atividade.
+Entrada em linguagem natural (texto/voz) permanece como visão futura e
+**não faz parte do MVP entregue**.
 
 ### **Data**
 
@@ -184,8 +167,10 @@ API utilizada.
 ### **Fora do escopo**
 
 As funcionalidades abaixo fazem parte da visão futura do produto, mas não
-serão implementadas no MVP:
+estão no MVP entregue:
 
+- Entrada de atividade em linguagem natural (texto).
+- Entrada de atividade por voz / microfone.
 - Criação de conta.
 - Login e autenticação.
 - Perfil de usuário.
@@ -212,7 +197,7 @@ A pessoa usuária poderá, por exemplo:
 - Criar suas próprias atividades.
 - Informar suas atividades favoritas.
 - Definir preferências e tolerâncias para cada atividade.
-- Utilizar sua localização atual para obter recomendações próximas.
+- Informar a atividade por texto ou voz em linguagem natural.
 - Salvar locais e consultas frequentes.
 - Receber recomendações personalizadas.
 - Configurar notificações sobre condições favoráveis.
@@ -238,10 +223,8 @@ e passe a ser:
   meteorológicas.
 - A recomendação considerará fatores como temperatura, precipitação e
   vento, de acordo com a atividade selecionada.
-- A pessoa usuária poderá informar a atividade manualmente ou por meio de
-  linguagem natural.
-- A identificação por texto ou voz será limitada às atividades
-  disponíveis no MVP.
+- A pessoa usuária informa a atividade por seleção no catálogo do MVP.
+- Entrada por linguagem natural (texto/voz) ficou fora do MVP entregue.
 - A pessoa poderá consultar o dia atual ou outra data disponível na
   previsão meteorológica.
 - O dia atual será utilizado como data padrão.
@@ -256,10 +239,6 @@ e passe a ser:
 - Os critérios terão como objetivo representar condições razoáveis e
   intuitivas para a realização de cada atividade, e não substituir
   orientações profissionais de segurança.
-- A identificação da atividade deverá possuir comportamento previsível e
-  tratamento adequado para entradas que não correspondam às atividades
-  disponíveis.
-
 ---
 
 ## **8. Restrições**
@@ -272,8 +251,6 @@ e passe a ser:
 - As regras de recomendação deverão ser determinísticas e testáveis.
 - O uso de localização atual deverá ser opcional.
 - A aplicação não deverá depender da localização atual para funcionar.
-- A entrada em linguagem natural deverá estar limitada ao contexto das
-  atividades disponíveis no MVP.
 - A seleção de data deverá respeitar o período de previsão disponibilizado
   pela API.
 
@@ -296,9 +273,10 @@ Inclui, entre outras:
 - daylight com tolerância de 5 pontos percentuais, fora do score;
 - valores decimais sem arredondamento prévio;
 - limitação de surfe sem dados marítimos;
-- identificação conservadora de atividade por texto/voz;
-- interpretação simples de datas em linguagem natural;
 - contrato conceitual do Recommendation Engine.
+
+Itens de linguagem natural / voz foram documentados historicamente, mas
+**não fazem parte do MVP entregue**.
 
 Não há Decision needed abertos para o Recommendation Engine nesta etapa.
 
@@ -394,7 +372,9 @@ uma ordem específica.
    Com base na recomendação, a pessoa decide se e quando realizará sua
    atividade.
 
-### **Jornada — Entrada rápida**
+### **Jornada — Entrada rápida (fora do MVP entregue)**
+
+Visão futura. Não implementada no MVP.
 
 1. **Necessidade**  
    A pessoa decide que gostaria de realizar uma atividade ao ar livre.
@@ -404,7 +384,7 @@ uma ordem específica.
 
 3. **Identificação**  
    O Climio identifica a atividade correspondente entre as opções
-   disponíveis no MVP.
+   disponíveis no catálogo.
 
 4. **Localização**  
    Caso autorizado, o Climio utiliza a localização atual da pessoa.

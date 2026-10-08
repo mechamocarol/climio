@@ -457,5 +457,189 @@ describe('recommendActivity', () => {
     expect(twentyOne?.blocked).toBe(true);
     expect(twentyOne?.blockingReasons).toContain('outside_activity_hours');
   });
+
+  describe('location-local past-start filter (today only)', () => {
+    const selectedDate = '2026-10-07';
+
+    function dayHours(): HourlyWeather[] {
+      return [
+        idealRunningHour('2026-10-07T08:00'),
+        idealRunningHour('2026-10-07T09:00'),
+        idealRunningHour('2026-10-07T14:00'),
+        idealRunningHour('2026-10-07T15:00'),
+        idealRunningHour('2026-10-07T16:00'),
+        idealRunningHour('2026-10-07T17:00'),
+        idealRunningHour('2026-10-07T18:00'),
+        idealRunningHour('2026-10-07T19:00'),
+      ];
+    }
+
+    it('keeps morning windows when the selected date is in the future', () => {
+      const futureWeather = [
+        idealRunningHour('2026-10-08T08:00'),
+        idealRunningHour('2026-10-08T09:00'),
+        idealRunningHour('2026-10-08T14:00'),
+        idealRunningHour('2026-10-08T15:00'),
+        idealRunningHour('2026-10-08T16:00'),
+        idealRunningHour('2026-10-08T17:00'),
+        idealRunningHour('2026-10-08T18:00'),
+        idealRunningHour('2026-10-08T19:00'),
+      ];
+
+      const result = recommendActivity({
+        weather: futureWeather,
+        rules: runningRules,
+        selectedDate: '2026-10-08',
+        locationLocalNow: {
+          date: '2026-10-07',
+          hour: 23,
+          minute: 10,
+        },
+      });
+
+      expect(result.recommendation?.startTimestamp).toBe('2026-10-08T08:00');
+    });
+
+    it('excludes windows that start before the location-local now on today', () => {
+      const result = recommendActivity({
+        weather: dayHours(),
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 15, minute: 30 },
+      });
+
+      expect(result.recommendation).not.toBeNull();
+      expect(result.recommendation?.startTimestamp).toBe('2026-10-07T16:00');
+
+      const starts = [
+        result.recommendation?.startTimestamp,
+        ...result.alternatives.map((window) => window.startTimestamp),
+      ];
+      expect(starts).not.toContain('2026-10-07T08:00');
+      expect(starts).not.toContain('2026-10-07T14:00');
+      expect(starts).not.toContain('2026-10-07T15:00');
+    });
+
+    it('allows a window that starts exactly at the location-local now', () => {
+      const result = recommendActivity({
+        weather: dayHours(),
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 16, minute: 0 },
+      });
+
+      expect(result.recommendation?.startTimestamp).toBe('2026-10-07T16:00');
+    });
+
+    it('excludes a window that already started even if it ends in the future', () => {
+      const result = recommendActivity({
+        weather: [
+          idealRunningHour('2026-10-07T15:00'),
+          idealRunningHour('2026-10-07T16:00'),
+          idealRunningHour('2026-10-07T18:00'),
+          idealRunningHour('2026-10-07T19:00'),
+        ],
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 15, minute: 30 },
+      });
+
+      expect(result.recommendation?.startTimestamp).toBe('2026-10-07T18:00');
+      expect(
+        result.alternatives.every(
+          (window) => window.startTimestamp >= '2026-10-07T16:00',
+        ),
+      ).toBe(true);
+    });
+
+    it('never returns a past primary recommendation on today', () => {
+      const result = recommendActivity({
+        weather: dayHours(),
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 15, minute: 30 },
+      });
+
+      expect(result.recommendation).not.toBeNull();
+      expect(
+        result.recommendation!.startTimestamp >= '2026-10-07T16:00',
+      ).toBe(true);
+    });
+
+    it('never returns past alternatives on today and keeps them non-overlapping', () => {
+      const result = recommendActivity({
+        weather: dayHours(),
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 15, minute: 30 },
+      });
+
+      expect(result.alternatives.length).toBeGreaterThan(0);
+      for (const alternative of result.alternatives) {
+        expect(alternative.startTimestamp >= '2026-10-07T16:00').toBe(true);
+      }
+
+      const recomputed = selectAlternativeWindows(
+        buildRecommendationWindows(
+          result.analyzedPeriods.filter(
+            (period) => period.weather.timestamp >= '2026-10-07T16:00',
+          ),
+        ),
+        result.recommendation,
+      );
+      expect(result.alternatives).toEqual(recomputed);
+    });
+
+    it('returns null recommendation when every remaining today hour has passed', () => {
+      const result = recommendActivity({
+        weather: [
+          idealRunningHour('2026-10-07T08:00'),
+          idealRunningHour('2026-10-07T09:00'),
+          idealRunningHour('2026-10-07T10:00'),
+        ],
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 23, minute: 10 },
+      });
+
+      expect(result.recommendation).toBeNull();
+      expect(result.alternatives).toEqual([]);
+      expect(result.analyzedPeriods.length).toBe(3);
+    });
+
+    it('is deterministic for an injected location-local now', () => {
+      const input = {
+        weather: dayHours(),
+        rules: runningRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 15, minute: 30 },
+      } as const;
+
+      expect(recommendActivity(input)).toEqual(recommendActivity(input));
+    });
+
+    it('still respects activityHours after applying the today filter', () => {
+      const childRules = getActivityRules('child_walk');
+      const result = recommendActivity({
+        weather: [
+          idealChildWalkHour('2026-10-07T05:00'),
+          idealChildWalkHour('2026-10-07T06:00'),
+          idealChildWalkHour('2026-10-07T07:00'),
+          idealChildWalkHour('2026-10-07T20:00'),
+          idealChildWalkHour('2026-10-07T21:00'),
+        ],
+        rules: childRules,
+        selectedDate,
+        locationLocalNow: { date: selectedDate, hour: 5, minute: 30 },
+      });
+
+      expect(result.recommendation).not.toBeNull();
+      for (const period of result.recommendation!.periods) {
+        const hour = hourFromTimestamp(period.weather.timestamp);
+        expect(hour).toBeGreaterThanOrEqual(6);
+        expect(hour).toBeLessThan(21);
+      }
+    });
+  });
 });
 

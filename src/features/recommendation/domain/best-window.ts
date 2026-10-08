@@ -1,8 +1,20 @@
 import {
+  ALLOW_IDEAL_SINGLE_HOUR_FALLBACK,
   DAYLIGHT_TIE_TOLERANCE_PERCENTAGE_POINTS,
   PREFERRED_WINDOW_DURATION_HOURS,
 } from '@/features/recommendation/domain/recommendation-config';
 import type { RecommendationWindow } from '@/features/recommendation/domain/types';
+
+/**
+ * 1h fallback candidate: exactly one period and that period is IDEAL.
+ * Uses existing C3 status — does not recompute score or classification.
+ */
+function isIdealSingleHourWindow(window: RecommendationWindow): boolean {
+  if (window.durationHours !== 1 || window.periods.length !== 1) {
+    return false;
+  }
+  return window.periods[0]?.status === 'IDEAL';
+}
 
 /**
  * A window is "daytime" when a strict majority of periods with known isDaylight
@@ -76,9 +88,11 @@ function compareWindows(
 /**
  * Selects the best recommendation window using deterministic ranking.
  *
- * 1. Prefer the >=2h pool when any such window exists; otherwise use 1h windows.
- * 2. Optionally prefer daytime windows within the 5pp percentage tolerance.
- * 3. Then averageScore → minimumScore → durationHours → earlier startTimestamp.
+ * 1. Prefer the >=2h pool when any such window exists.
+ * 2. Otherwise, if `ALLOW_IDEAL_SINGLE_HOUR_FALLBACK`, use only 1h windows
+ *    whose single period status is IDEAL (ACCEPTABLE 1h is never a fallback).
+ * 3. Optionally prefer daytime windows within the 5pp percentage tolerance.
+ * 4. Then averageScore → minimumScore → durationHours → earlier startTimestamp.
  */
 export function selectBestWindow(
   windows: readonly RecommendationWindow[],
@@ -91,10 +105,13 @@ export function selectBestWindow(
   const preferredDuration = windows.filter(
     (window) => window.durationHours >= PREFERRED_WINDOW_DURATION_HOURS,
   );
+
   const candidates =
     preferredDuration.length > 0
       ? preferredDuration
-      : windows.filter((window) => window.durationHours === 1);
+      : ALLOW_IDEAL_SINGLE_HOUR_FALLBACK
+        ? windows.filter(isIdealSingleHourWindow)
+        : [];
 
   if (candidates.length === 0) {
     return null;

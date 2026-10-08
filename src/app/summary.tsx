@@ -3,9 +3,13 @@ import { Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { getActivityById } from '@/features/activity/domain/activities';
-import { isPlanReadyForRecommendation } from '@/features/plan/domain/plan';
+import {
+  isPlanReadyForRecommendation,
+  toHourlyForecastInput,
+} from '@/features/plan/domain/plan';
 import { formatPlanDateLabel } from '@/features/plan/presentation/plan-date-format';
 import { usePlanStore } from '@/features/plan/store/plan-store';
+import { useHourlyForecast } from '@/features/weather/hooks/use-hourly-forecast';
 import { useClimioTheme } from '@/providers/theme-provider';
 import { lightColors } from '@/shared/theme/tokens';
 import { ClimioIcon } from '@/shared/ui/climio-icon';
@@ -30,11 +34,11 @@ export default function SummaryScreen() {
   const location = usePlanStore((state) => state.location);
   const date = usePlanStore((state) => state.date);
 
-  const planReady = isPlanReadyForRecommendation({
-    activityId,
-    location,
-    date,
-  });
+  const plan = { activityId, location, date };
+  const planReady = isPlanReadyForRecommendation(plan);
+  // Same query key / repository as Result — warm cache while the user reviews.
+  useHourlyForecast(toHourlyForecastInput(plan));
+
   const activity =
     activityId !== null ? getActivityById(activityId) : null;
 

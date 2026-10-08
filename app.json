@@ -33,6 +33,12 @@
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 76
         }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "O Climio usa sua localização para sugerir o melhor horário perto de você."
+        }
       ]
     ],
     "experiments": {

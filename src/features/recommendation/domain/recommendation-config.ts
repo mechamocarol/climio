@@ -11,12 +11,14 @@ export const CLASSIFICATION_THRESHOLDS = {
 /**
  * Practical recommendation window length (hours).
  * C4 emits sliding candidates of this size from each eligible run;
- * C5 prefers the pool of windows with `durationHours >=` this value,
- * falling back to 1h windows when none exist.
+ * C5 prefers the pool of windows with `durationHours >=` this value.
  */
 export const PREFERRED_WINDOW_DURATION_HOURS = 2;
 
-/** Allow recommending a single IDEAL hour when no 2-hour window exists. */
+/**
+ * When no >=2h window exists, C5 may fall back to a single-hour window
+ * whose period status is IDEAL. ACCEPTABLE 1h windows are never selected.
+ */
 export const ALLOW_IDEAL_SINGLE_HOUR_FALLBACK = true;
 
 /**

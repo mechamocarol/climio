@@ -7,6 +7,7 @@ import {
 } from '@/features/plan/domain/plan';
 import { usePlanStore } from '@/features/plan/store/plan-store';
 import { getActivityRules } from '@/features/recommendation/domain/activity-rules';
+import { resolveLocationLocalWallClock } from '@/features/recommendation/domain/location-local-time';
 import { recommendActivity } from '@/features/recommendation/domain/recommendation-engine';
 import type { RecommendationResult } from '@/features/recommendation/domain/types';
 import { useHourlyForecast } from '@/features/weather/hooks/use-hourly-forecast';
@@ -34,11 +35,18 @@ export function usePlanRecommendation() {
       return null;
     }
 
+    const locationLocalNow =
+      location?.timezone != null
+        ? resolveLocationLocalWallClock(new Date(), location.timezone)
+        : null;
+
     return recommendActivity({
       weather: forecastQuery.data,
       rules: getActivityRules(activityId),
+      selectedDate: date,
+      locationLocalNow,
     });
-  }, [activityId, forecastQuery.data, planReady]);
+  }, [activityId, date, forecastQuery.data, location, planReady]);
 
   return {
     plan,

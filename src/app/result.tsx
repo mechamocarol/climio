@@ -90,7 +90,7 @@ export default function ResultScreen() {
       <StatusScreen>
         <NoRecommendationState
           summary={emptySummary}
-          onChooseDate={() => router.replace('/date-picker')}
+          onChooseDate={() => router.replace('/home')}
         />
       </StatusScreen>
     );

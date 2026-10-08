@@ -494,9 +494,13 @@ Resultado:
 
 Preferir janelas de pelo menos 2 horas consecutivas.
 
-Se não existir nenhuma janela de 2 horas, mas existir uma única hora classificada como IDEAL, essa hora pode ser recomendada como fallback.
+Se existir pelo menos uma janela prática de 2 horas, a recomendação principal deve ser escolhida nesse pool.
 
-Não exigir artificialmente 2 horas quando isso faria o sistema ignorar uma boa oportunidade.
+Se não existir nenhuma janela de 2 horas, o fallback permite apenas uma janela de 1 hora cujo período seja classificado como IDEAL. Janelas de 1 hora ACCEPTABLE não entram nesse fallback.
+
+Se não houver janela de 2 horas e nenhuma hora IDEAL isolada, não há recomendação principal.
+
+Não exigir artificialmente 2 horas quando isso faria o sistema ignorar uma boa oportunidade IDEAL de 1 hora.
 
 ---
 
@@ -1495,6 +1499,8 @@ A estratégia deve ser previsível, determinística, testável e baseada no cat�
 
 Não criar NLP complexo no MVP.
 
+**Estado atual do MVP:** a entrada de atividade em linguagem natural **não está implementada**. A atividade é selecionada apenas pelo catálogo na UI.
+
 ---
 
 ## 29. Identificação de atividade
@@ -1526,6 +1532,8 @@ O reconhecimento de voz não faz parte das regras do Recommendation Engine.
 
 O motor recebe apenas a atividade já identificada.
 
+**Estado atual do MVP:** entrada por voz / microfone **não está implementada** e permanece fora do escopo entregue.
+
 ---
 
 ## 31. Localização
@@ -1540,6 +1548,8 @@ A localização atual depende da permissão do dispositivo.
 Se a permissão for negada ou estiver indisponível, o usuário deve conseguir continuar utilizando a busca manual.
 
 A recomendação deve funcionar independentemente da origem da localização.
+
+**Estado atual do MVP:** ambas as formas estão implementadas e convergem para o mesmo modelo de domínio `Location` (sem tipo `CurrentLocation` separado). O caminho GPS usa `expo-location` (permissão, fix e reverse geocoding) e resolve o timezone IANA via Open-Meteo (`timezone=auto`). Falhas de permissão, GPS, reverse geocode e timezone devem ser comunicadas ao usuário sem quebrar o fluxo.
 
 ---
 
@@ -1570,6 +1580,8 @@ Cada resultado deve apresentar informações suficientes para diferenciação, c
 - país.
 
 Após a seleção, latitude e longitude devem ser armazenadas para consulta da previsão.
+
+No caminho GPS, o id pode ser sintético e determinístico (`gps:latitude,longitude`), pois não há id do Geocoding Open-Meteo. Nome, região e país vêm do reverse geocoding do dispositivo (com fallback de nome quando necessário).
 
 ---
 
