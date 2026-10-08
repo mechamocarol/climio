@@ -75,15 +75,15 @@ function createWindow(input: {
 describe('windowsOverlap', () => {
   it('does not treat endpoint-touching windows as overlapping', () => {
     const morning = createWindow({
-      startTimestamp: '2026-10-06T17:00:00',
-      endTimestamp: '2026-10-06T19:00:00',
+      startTimestamp: '2026-10-06T10:00:00',
+      endTimestamp: '2026-10-06T12:00:00',
       durationHours: 2,
       averageScore: 2.5,
       minimumScore: 2.4,
     });
     const evening = createWindow({
-      startTimestamp: '2026-10-06T19:00:00',
-      endTimestamp: '2026-10-06T21:00:00',
+      startTimestamp: '2026-10-06T12:00:00',
+      endTimestamp: '2026-10-06T14:00:00',
       durationHours: 2,
       averageScore: 2.4,
       minimumScore: 2.3,
@@ -92,21 +92,26 @@ describe('windowsOverlap', () => {
     expect(windowsOverlap(morning, evening)).toBe(false);
   });
 
-  it('detects partial and full overlaps', () => {
+  it('detects partial overlap across the shared hour', () => {
     const a = createWindow({
-      startTimestamp: '2026-10-06T17:00:00',
-      endTimestamp: '2026-10-06T19:00:00',
+      startTimestamp: '2026-10-06T10:00:00',
+      endTimestamp: '2026-10-06T12:00:00',
       durationHours: 2,
       averageScore: 2.5,
       minimumScore: 2.4,
     });
     const partial = createWindow({
-      startTimestamp: '2026-10-06T18:00:00',
-      endTimestamp: '2026-10-06T20:00:00',
+      startTimestamp: '2026-10-06T11:00:00',
+      endTimestamp: '2026-10-06T13:00:00',
       durationHours: 2,
       averageScore: 2.4,
       minimumScore: 2.3,
     });
+
+    expect(windowsOverlap(a, partial)).toBe(true);
+  });
+
+  it('detects nested and contained overlaps', () => {
     const nested = createWindow({
       startTimestamp: '2026-10-06T17:00:00',
       endTimestamp: '2026-10-06T20:00:00',
@@ -122,7 +127,6 @@ describe('windowsOverlap', () => {
       minimumScore: 2.2,
     });
 
-    expect(windowsOverlap(a, partial)).toBe(true);
     expect(windowsOverlap(nested, inner)).toBe(true);
   });
 });
@@ -540,5 +544,174 @@ describe('selectAlternativeWindows', () => {
     expect(result[0]?.durationHours).toBe(1);
     expect(result[0]?.periods).toHaveLength(1);
     expect(result[1]?.periods).toHaveLength(2);
+  });
+
+  it('excludes 1h subsets that overlap the main 2h recommendation', () => {
+    const main = createWindow({
+      startTimestamp: '2026-10-07T10:00:00',
+      endTimestamp: '2026-10-07T12:00:00',
+      durationHours: 2,
+      averageScore: 3,
+      minimumScore: 3,
+    });
+    const tenEleven = createWindow({
+      startTimestamp: '2026-10-07T10:00:00',
+      endTimestamp: '2026-10-07T11:00:00',
+      durationHours: 1,
+      averageScore: 3,
+      minimumScore: 3,
+    });
+    const elevenTwelve = createWindow({
+      startTimestamp: '2026-10-07T11:00:00',
+      endTimestamp: '2026-10-07T12:00:00',
+      durationHours: 1,
+      averageScore: 3,
+      minimumScore: 3,
+    });
+    const thirteenFifteen = createWindow({
+      startTimestamp: '2026-10-07T13:00:00',
+      endTimestamp: '2026-10-07T15:00:00',
+      durationHours: 2,
+      averageScore: 2.8,
+      minimumScore: 2.7,
+    });
+    const sixteenEighteen = createWindow({
+      startTimestamp: '2026-10-07T16:00:00',
+      endTimestamp: '2026-10-07T18:00:00',
+      durationHours: 2,
+      averageScore: 2.6,
+      minimumScore: 2.5,
+    });
+
+    expect(
+      selectAlternativeWindows(
+        [main, tenEleven, elevenTwelve, thirteenFifteen, sixteenEighteen],
+        main,
+      ),
+    ).toEqual([thirteenFifteen, sixteenEighteen]);
+  });
+
+  it('does not select alternatives that overlap each other', () => {
+    const main = createWindow({
+      startTimestamp: '2026-10-07T08:00:00',
+      endTimestamp: '2026-10-07T10:00:00',
+      durationHours: 2,
+      averageScore: 3,
+      minimumScore: 3,
+    });
+    const thirteenFifteen = createWindow({
+      startTimestamp: '2026-10-07T13:00:00',
+      endTimestamp: '2026-10-07T15:00:00',
+      durationHours: 2,
+      averageScore: 2.5,
+      minimumScore: 2.4,
+    });
+    const fourteenSixteen = createWindow({
+      startTimestamp: '2026-10-07T14:00:00',
+      endTimestamp: '2026-10-07T16:00:00',
+      durationHours: 2,
+      averageScore: 2.5,
+      minimumScore: 2.4,
+    });
+    const sixteenEighteen = createWindow({
+      startTimestamp: '2026-10-07T16:00:00',
+      endTimestamp: '2026-10-07T18:00:00',
+      durationHours: 2,
+      averageScore: 2.5,
+      minimumScore: 2.4,
+    });
+
+    const result = selectAlternativeWindows(
+      [main, thirteenFifteen, fourteenSixteen, sixteenEighteen],
+      main,
+    );
+
+    expect(result).toEqual([thirteenFifteen, sixteenEighteen]);
+    expect(result).not.toContain(fourteenSixteen);
+  });
+
+  it('keeps alternatives unique by startTimestamp after selection', () => {
+    const main = createWindow({
+      startTimestamp: '2026-10-07T10:00:00',
+      endTimestamp: '2026-10-07T12:00:00',
+      durationHours: 2,
+      averageScore: 3,
+      minimumScore: 3,
+    });
+    const candidates = [
+      main,
+      createWindow({
+        startTimestamp: '2026-10-07T10:00:00',
+        endTimestamp: '2026-10-07T11:00:00',
+        durationHours: 1,
+        averageScore: 3,
+        minimumScore: 3,
+      }),
+      createWindow({
+        startTimestamp: '2026-10-07T11:00:00',
+        endTimestamp: '2026-10-07T12:00:00',
+        durationHours: 1,
+        averageScore: 3,
+        minimumScore: 3,
+      }),
+      createWindow({
+        startTimestamp: '2026-10-07T13:00:00',
+        endTimestamp: '2026-10-07T15:00:00',
+        durationHours: 2,
+        averageScore: 2.7,
+        minimumScore: 2.6,
+      }),
+      createWindow({
+        startTimestamp: '2026-10-07T16:00:00',
+        endTimestamp: '2026-10-07T18:00:00',
+        durationHours: 2,
+        averageScore: 2.5,
+        minimumScore: 2.4,
+      }),
+    ];
+
+    const result = selectAlternativeWindows(candidates, main);
+    const starts = result.map((window) => window.startTimestamp);
+
+    expect(new Set(starts).size).toBe(starts.length);
+    expect(starts).not.toContain(main.startTimestamp);
+  });
+
+  it('is deterministic for the same inputs', () => {
+    const main = createWindow({
+      startTimestamp: '2026-10-07T08:00:00',
+      endTimestamp: '2026-10-07T10:00:00',
+      durationHours: 2,
+      averageScore: 3,
+      minimumScore: 3,
+    });
+    const windows = [
+      main,
+      createWindow({
+        startTimestamp: '2026-10-07T12:00:00',
+        endTimestamp: '2026-10-07T14:00:00',
+        durationHours: 2,
+        averageScore: 2.6,
+        minimumScore: 2.5,
+      }),
+      createWindow({
+        startTimestamp: '2026-10-07T13:00:00',
+        endTimestamp: '2026-10-07T15:00:00',
+        durationHours: 2,
+        averageScore: 2.7,
+        minimumScore: 2.6,
+      }),
+      createWindow({
+        startTimestamp: '2026-10-07T16:00:00',
+        endTimestamp: '2026-10-07T18:00:00',
+        durationHours: 2,
+        averageScore: 2.5,
+        minimumScore: 2.4,
+      }),
+    ];
+
+    expect(selectAlternativeWindows(windows, main)).toEqual(
+      selectAlternativeWindows(windows, main),
+    );
   });
 });

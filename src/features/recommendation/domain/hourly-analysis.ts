@@ -114,6 +114,7 @@ function computeWeightedScore(
  * Analyzes a single hourly weather observation for one activity.
  * Returns null when required score/blocking data is missing (§22).
  * Daylight is ignored for scoring (contextual only — C5).
+ * Activity hours are eligibility (blocking), not score — see §18.1.
  */
 export function analyzeHourlyWeather(
   rules: ActivityRules,

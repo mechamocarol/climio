@@ -55,6 +55,8 @@ function createWindow(input: {
   averagePercentage: number;
   minimumScore: number;
   daylightFlags?: readonly (boolean | null)[];
+  /** Applied to every period in the window (defaults to IDEAL). */
+  status?: PeriodStatus;
 }): RecommendationWindow {
   const flags = input.daylightFlags ?? Array.from({ length: input.durationHours }, () => true);
   const periods = flags.map((isDaylight, index) => {
@@ -64,6 +66,7 @@ function createWindow(input: {
       timestamp,
       score: input.averageScore,
       percentage: input.averagePercentage,
+      status: input.status ?? 'IDEAL',
       isDaylight,
     });
   });
@@ -191,6 +194,29 @@ describe('selectBestWindow', () => {
     });
 
     expect(selectBestWindow([oneHour, twoHour], false)).toBe(twoHour);
+  });
+
+  it('prefers a 2h window over a higher-scoring 1h ACCEPTABLE window', () => {
+    const twoHour = createWindow({
+      startTimestamp: '2026-10-06T10:00:00',
+      endTimestamp: '2026-10-06T12:00:00',
+      durationHours: 2,
+      averageScore: 2.0,
+      averagePercentage: 67,
+      minimumScore: 1.8,
+      status: 'ACCEPTABLE',
+    });
+    const acceptableHour = createWindow({
+      startTimestamp: '2026-10-06T15:00:00',
+      endTimestamp: '2026-10-06T16:00:00',
+      durationHours: 1,
+      averageScore: 2.2,
+      averagePercentage: 70,
+      minimumScore: 2.2,
+      status: 'ACCEPTABLE',
+    });
+
+    expect(selectBestWindow([acceptableHour, twoHour], false)).toBe(twoHour);
   });
 
   it('uses minimumScore as a tie-breaker', () => {
@@ -398,7 +424,7 @@ describe('selectBestWindow', () => {
     expect(selectBestWindow([unknown, night], true)).toBe(night);
   });
 
-  it('considers 1h windows only when no >=2h window exists', () => {
+  it('falls back to the best IDEAL 1h window when no >=2h window exists', () => {
     const firstHour = createWindow({
       startTimestamp: '2026-10-06T09:00:00',
       endTimestamp: '2026-10-06T10:00:00',
@@ -406,6 +432,7 @@ describe('selectBestWindow', () => {
       averageScore: 2.4,
       averagePercentage: 80,
       minimumScore: 2.4,
+      status: 'IDEAL',
     });
     const betterHour = createWindow({
       startTimestamp: '2026-10-06T15:00:00',
@@ -414,9 +441,85 @@ describe('selectBestWindow', () => {
       averageScore: 2.9,
       averagePercentage: 96,
       minimumScore: 2.9,
+      status: 'IDEAL',
     });
 
     expect(selectBestWindow([firstHour, betterHour], false)).toBe(betterHour);
+  });
+
+  it('does not fall back to ACCEPTABLE 1h windows when no >=2h window exists', () => {
+    const acceptableMorning = createWindow({
+      startTimestamp: '2026-10-06T09:00:00',
+      endTimestamp: '2026-10-06T10:00:00',
+      durationHours: 1,
+      averageScore: 2.0,
+      averagePercentage: 67,
+      minimumScore: 2.0,
+      status: 'ACCEPTABLE',
+    });
+    const acceptableAfternoon = createWindow({
+      startTimestamp: '2026-10-06T15:00:00',
+      endTimestamp: '2026-10-06T16:00:00',
+      durationHours: 1,
+      averageScore: 2.2,
+      averagePercentage: 73,
+      minimumScore: 2.2,
+      status: 'ACCEPTABLE',
+    });
+
+    expect(
+      selectBestWindow([acceptableMorning, acceptableAfternoon], false),
+    ).toBeNull();
+  });
+
+  it('ignores ACCEPTABLE 1h when mixing with IDEAL 1h fallback candidates', () => {
+    const acceptableHigherScore = createWindow({
+      startTimestamp: '2026-10-06T09:00:00',
+      endTimestamp: '2026-10-06T10:00:00',
+      durationHours: 1,
+      averageScore: 2.2,
+      averagePercentage: 73,
+      minimumScore: 2.2,
+      status: 'ACCEPTABLE',
+    });
+    const ideal = createWindow({
+      startTimestamp: '2026-10-06T15:00:00',
+      endTimestamp: '2026-10-06T16:00:00',
+      durationHours: 1,
+      averageScore: 2.3,
+      averagePercentage: 77,
+      minimumScore: 2.3,
+      status: 'IDEAL',
+    });
+
+    expect(
+      selectBestWindow([acceptableHigherScore, ideal], false),
+    ).toBe(ideal);
+  });
+
+  it('applies daylight preference among IDEAL 1h fallback candidates', () => {
+    const nightIdeal = createWindow({
+      startTimestamp: '2026-10-06T20:00:00',
+      endTimestamp: '2026-10-06T21:00:00',
+      durationHours: 1,
+      averageScore: 2.7,
+      averagePercentage: 90,
+      minimumScore: 2.7,
+      status: 'IDEAL',
+      daylightFlags: [false],
+    });
+    const dayIdeal = createWindow({
+      startTimestamp: '2026-10-06T10:00:00',
+      endTimestamp: '2026-10-06T11:00:00',
+      durationHours: 1,
+      averageScore: 2.6,
+      averagePercentage: 87,
+      minimumScore: 2.6,
+      status: 'IDEAL',
+      daylightFlags: [true],
+    });
+
+    expect(selectBestWindow([nightIdeal, dayIdeal], true)).toBe(dayIdeal);
   });
 
   it('handles multi-period daylight majority inside a window', () => {

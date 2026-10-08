@@ -1,3 +1,4 @@
+import { PREFERRED_WINDOW_DURATION_HOURS } from '@/features/recommendation/domain/recommendation-config';
 import type {
   AnalyzedPeriod,
   PeriodStatus,
@@ -61,28 +62,52 @@ function buildWindow(group: readonly AnalyzedPeriod[]): RecommendationWindow {
 }
 
 /**
- * Groups consecutive eligible AnalyzedPeriod hours into RecommendationWindows.
+ * Expands one contiguous eligible run into practical candidates:
+ * - sliding windows of `PREFERRED_WINDOW_DURATION_HOURS` (product "best time" length);
+ * - every single eligible hour (1h fallback pool for C5).
  *
- * Eligible: status IDEAL or ACCEPTABLE, and not blocked.
- * Continuity: next hour starts exactly 1h after the previous hour's timestamp.
- * Does not select the best window — that belongs to a later step.
+ * Maximal all-day runs are never emitted as a single window.
  */
-export function buildRecommendationWindows(
-  periods: readonly AnalyzedPeriod[],
+function expandEligibleRun(
+  group: readonly AnalyzedPeriod[],
 ): readonly RecommendationWindow[] {
-  const sorted = [...periods].sort(
-    (a, b) =>
-      parseHourTimestamp(a.weather.timestamp) - parseHourTimestamp(b.weather.timestamp),
-  );
+  if (group.length === 0) {
+    return [];
+  }
 
   const windows: RecommendationWindow[] = [];
+  const preferred = PREFERRED_WINDOW_DURATION_HOURS;
+
+  if (group.length >= preferred) {
+    for (let start = 0; start + preferred <= group.length; start += 1) {
+      windows.push(buildWindow(group.slice(start, start + preferred)));
+    }
+  }
+
+  for (const period of group) {
+    windows.push(buildWindow([period]));
+  }
+
+  return windows;
+}
+
+function collectEligibleRuns(
+  periods: readonly AnalyzedPeriod[],
+): readonly (readonly AnalyzedPeriod[])[] {
+  const sorted = [...periods].sort(
+    (a, b) =>
+      parseHourTimestamp(a.weather.timestamp) -
+      parseHourTimestamp(b.weather.timestamp),
+  );
+
+  const runs: AnalyzedPeriod[][] = [];
   let currentGroup: AnalyzedPeriod[] = [];
 
   const flush = (): void => {
     if (currentGroup.length === 0) {
       return;
     }
-    windows.push(buildWindow(currentGroup));
+    runs.push(currentGroup);
     currentGroup = [];
   };
 
@@ -107,5 +132,19 @@ export function buildRecommendationWindows(
   }
 
   flush();
-  return windows;
+  return runs;
+}
+
+/**
+ * Builds practical RecommendationWindows from analyzed hours.
+ *
+ * 1. Group consecutive eligible hours (IDEAL/ACCEPTABLE, not blocked).
+ * 2. Expand each run into sliding preferred-duration windows + 1h atoms.
+ *
+ * Does not select the best window — that belongs to C5.
+ */
+export function buildRecommendationWindows(
+  periods: readonly AnalyzedPeriod[],
+): readonly RecommendationWindow[] {
+  return collectEligibleRuns(periods).flatMap((run) => expandEligibleRun(run));
 }

@@ -43,9 +43,13 @@ function compareAlternativeWindows(
 /**
  * Selects up to 3 alternative windows for a primary recommendation.
  *
- * Excludes the main window and any window that overlaps it temporally
- * using half-open intervals [startTimestamp, endTimestamp).
- * Ranking uses objective metrics only (no >=2h pool, no daylight preference).
+ * 1. Drop the main window (by reference) and any window that overlaps it
+ *    using half-open intervals [startTimestamp, endTimestamp).
+ * 2. Rank remaining candidates by objective metrics only
+ *    (averageScore → minimumScore → durationHours → earlier start;
+ *    no >=2h pool, no daylight preference).
+ * 3. Greedily keep candidates that do not overlap any already selected
+ *    alternative, up to MAX_ALTERNATIVE_PERIODS.
  */
 export function selectAlternativeWindows(
   windows: readonly RecommendationWindow[],
@@ -55,11 +59,23 @@ export function selectAlternativeWindows(
     return [];
   }
 
-  const candidates = windows.filter(
-    (window) => window !== mainWindow && !windowsOverlap(window, mainWindow),
-  );
+  const ranked = windows
+    .filter(
+      (window) => window !== mainWindow && !windowsOverlap(window, mainWindow),
+    )
+    .sort(compareAlternativeWindows);
 
-  return [...candidates]
-    .sort(compareAlternativeWindows)
-    .slice(0, MAX_ALTERNATIVE_PERIODS);
+  const selected: RecommendationWindow[] = [];
+
+  for (const candidate of ranked) {
+    if (selected.length >= MAX_ALTERNATIVE_PERIODS) {
+      break;
+    }
+    if (selected.some((chosen) => windowsOverlap(candidate, chosen))) {
+      continue;
+    }
+    selected.push(candidate);
+  }
+
+  return selected;
 }

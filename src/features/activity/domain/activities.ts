@@ -36,6 +36,14 @@ export const ACTIVITIES: readonly Activity[] = [
   { id: 'kite', name: 'Empinar pipa' },
 ] as const;
 
+/** Quick-access activities shown on the home plan builder. */
+export const QUICK_ACTIVITY_IDS = [
+  'running',
+  'skateboarding',
+  'cycling',
+  'walking',
+] as const satisfies readonly ActivityId[];
+
 export function isActivityId(value: string): value is ActivityId {
   return (ACTIVITY_IDS as readonly string[]).includes(value);
 }
@@ -46,4 +54,8 @@ export function getActivityById(id: ActivityId): Activity {
     throw new Error(`Unknown activity id: ${id}`);
   }
   return activity;
+}
+
+export function listQuickActivities(): readonly Activity[] {
+  return QUICK_ACTIVITY_IDS.map((id) => getActivityById(id));
 }

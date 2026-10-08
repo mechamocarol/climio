@@ -1,6 +1,8 @@
 import type { ActivityId } from '@/features/activity/domain/activities';
 import { ACTIVITY_IDS } from '@/features/activity/domain/activities';
 import {
+  CHILD_WALK_ACTIVITY_HOURS,
+  DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   GUST_BLOCKING_THRESHOLD_KM_H,
   STANDARD_GUST_BANDS,
   STANDARD_UV_BANDS,
@@ -53,6 +55,7 @@ const runningRules: ActivityRules = {
     gust: 1,
   },
   blockingConditions: [STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: true,
 };
 
@@ -88,6 +91,7 @@ const skateboardingRules: ActivityRules = {
     gust: 3,
   },
   blockingConditions: [SIGNIFICANT_RAIN, STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: false,
 };
 
@@ -123,6 +127,7 @@ const cyclingRules: ActivityRules = {
     gust: 3,
   },
   blockingConditions: [STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: true,
 };
 
@@ -158,6 +163,7 @@ const walkingRules: ActivityRules = {
     gust: 1,
   },
   blockingConditions: [STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: true,
 };
 
@@ -197,6 +203,7 @@ const petWalkRules: ActivityRules = {
     STORM,
     { type: 'apparent_temperature_above', thresholdCelsius: 32 },
   ],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: false,
 };
 
@@ -236,6 +243,7 @@ const childWalkRules: ActivityRules = {
     STORM,
     { type: 'temperature_above', thresholdCelsius: 33 },
   ],
+  activityHours: CHILD_WALK_ACTIVITY_HOURS,
   prefersDaylight: false,
 };
 
@@ -270,6 +278,7 @@ const beachRules: ActivityRules = {
     wind: 2,
   },
   blockingConditions: [SIGNIFICANT_RAIN, STORM],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: true,
 };
 
@@ -307,6 +316,7 @@ const surfingRules: ActivityRules = {
     gust: 3,
   },
   blockingConditions: [STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: false,
 };
 
@@ -341,6 +351,7 @@ const picnicRules: ActivityRules = {
     wind: 3,
   },
   blockingConditions: [SIGNIFICANT_RAIN, STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: true,
 };
 
@@ -378,6 +389,7 @@ const kiteRules: ActivityRules = {
     temperature: 1,
   },
   blockingConditions: [SIGNIFICANT_RAIN, STORM, GUST_ABOVE_45],
+  activityHours: DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   prefersDaylight: true,
 };
 

@@ -1,3 +1,4 @@
+import { PREFERRED_WINDOW_DURATION_HOURS } from '@/features/recommendation/domain/recommendation-config';
 import type {
   AnalyzedPeriod,
   FactorScoreBreakdown,
@@ -41,8 +42,16 @@ function createPeriod(input: {
   };
 }
 
+function windowKey(window: {
+  startTimestamp: string;
+  endTimestamp: string;
+  durationHours: number;
+}): string {
+  return `${window.startTimestamp}|${window.endTimestamp}|${window.durationHours}`;
+}
+
 describe('buildRecommendationWindows', () => {
-  it('groups a continuous Ideal+Ideal+Acceptable sequence into one 3h window', () => {
+  it('expands a 3h Ideal+Ideal+Acceptable run into sliding 2h windows plus 1h atoms', () => {
     const periods = [
       createPeriod({ timestamp: '2026-10-06T17:00:00', status: 'IDEAL', score: 3, percentage: 100 }),
       createPeriod({
@@ -60,20 +69,22 @@ describe('buildRecommendationWindows', () => {
     ];
 
     const windows = buildRecommendationWindows(periods);
+    const twoHour = windows.filter((window) => window.durationHours === 2);
+    const oneHour = windows.filter((window) => window.durationHours === 1);
 
-    expect(windows).toHaveLength(1);
-    expect(windows[0]).toMatchObject({
-      startTimestamp: '2026-10-06T17:00:00',
-      endTimestamp: '2026-10-06T20:00:00',
-      durationHours: 3,
-      averageScore: (3 + 2.7 + 2.1) / 3,
-      averagePercentage: (100 + 90 + 70) / 3,
-      minimumScore: 2.1,
+    expect(twoHour).toHaveLength(2);
+    expect(twoHour.map(windowKey)).toEqual([
+      '2026-10-06T17:00:00|2026-10-06T19:00:00|2',
+      '2026-10-06T18:00:00|2026-10-06T20:00:00|2',
+    ]);
+    expect(twoHour[0]).toMatchObject({
+      averageScore: (3 + 2.7) / 2,
+      minimumScore: 2.7,
     });
-    expect(windows[0]?.periods).toHaveLength(3);
+    expect(oneHour).toHaveLength(3);
   });
 
-  it('splits on UNFAVORABLE', () => {
+  it('splits runs on UNFAVORABLE and expands each run independently', () => {
     const windows = buildRecommendationWindows([
       createPeriod({ timestamp: '2026-10-06T17:00:00', status: 'IDEAL' }),
       createPeriod({ timestamp: '2026-10-06T18:00:00', status: 'IDEAL' }),
@@ -83,17 +94,12 @@ describe('buildRecommendationWindows', () => {
       createPeriod({ timestamp: '2026-10-06T22:00:00', status: 'IDEAL' }),
     ]);
 
-    expect(windows).toHaveLength(2);
-    expect(windows[0]).toMatchObject({
-      startTimestamp: '2026-10-06T17:00:00',
-      endTimestamp: '2026-10-06T20:00:00',
-      durationHours: 3,
-    });
-    expect(windows[1]).toMatchObject({
-      startTimestamp: '2026-10-06T21:00:00',
-      endTimestamp: '2026-10-06T23:00:00',
-      durationHours: 2,
-    });
+    const twoHour = windows.filter((window) => window.durationHours === 2);
+    expect(twoHour.map(windowKey)).toEqual([
+      '2026-10-06T17:00:00|2026-10-06T19:00:00|2',
+      '2026-10-06T18:00:00|2026-10-06T20:00:00|2',
+      '2026-10-06T21:00:00|2026-10-06T23:00:00|2',
+    ]);
   });
 
   it('splits on INADEQUATE', () => {
@@ -108,17 +114,12 @@ describe('buildRecommendationWindows', () => {
       createPeriod({ timestamp: '2026-10-06T19:00:00', status: 'IDEAL' }),
     ]);
 
+    expect(windows.every((window) => window.durationHours === 1)).toBe(true);
     expect(windows).toHaveLength(2);
-    expect(windows[0]).toMatchObject({
-      startTimestamp: '2026-10-06T17:00:00',
-      endTimestamp: '2026-10-06T18:00:00',
-      durationHours: 1,
-    });
-    expect(windows[1]).toMatchObject({
-      startTimestamp: '2026-10-06T19:00:00',
-      endTimestamp: '2026-10-06T20:00:00',
-      durationHours: 1,
-    });
+    expect(windows.map((window) => window.startTimestamp)).toEqual([
+      '2026-10-06T17:00:00',
+      '2026-10-06T19:00:00',
+    ]);
   });
 
   it('splits on blocked periods', () => {
@@ -135,7 +136,7 @@ describe('buildRecommendationWindows', () => {
     ]);
 
     expect(windows).toHaveLength(2);
-    expect(windows[0]?.durationHours).toBe(1);
+    expect(windows.every((window) => window.durationHours === 1)).toBe(true);
     expect(windows[1]?.startTimestamp).toBe('2026-10-06T19:00:00');
   });
 
@@ -166,17 +167,20 @@ describe('buildRecommendationWindows', () => {
       createPeriod({ timestamp: '2026-10-06T20:00:00', status: 'IDEAL' }),
     ]);
 
-    expect(windows).toHaveLength(2);
-    expect(windows[0]).toMatchObject({
+    const twoHour = windows.filter((window) => window.durationHours === 2);
+    const oneHour = windows.filter((window) => window.durationHours === 1);
+
+    expect(twoHour).toHaveLength(1);
+    expect(twoHour[0]).toMatchObject({
       startTimestamp: '2026-10-06T17:00:00',
       endTimestamp: '2026-10-06T19:00:00',
       durationHours: 2,
     });
-    expect(windows[1]).toMatchObject({
-      startTimestamp: '2026-10-06T20:00:00',
-      endTimestamp: '2026-10-06T21:00:00',
-      durationHours: 1,
-    });
+    expect(oneHour.map((window) => window.startTimestamp)).toEqual([
+      '2026-10-06T17:00:00',
+      '2026-10-06T18:00:00',
+      '2026-10-06T20:00:00',
+    ]);
   });
 
   it('builds a single 1h window', () => {
@@ -195,7 +199,7 @@ describe('buildRecommendationWindows', () => {
     });
   });
 
-  it('builds two independent windows separated by status', () => {
+  it('builds independent windows separated by status', () => {
     const windows = buildRecommendationWindows([
       createPeriod({ timestamp: '2026-10-06T17:00:00', status: 'IDEAL' }),
       createPeriod({ timestamp: '2026-10-06T18:00:00', status: 'UNFAVORABLE', score: 1, percentage: 40 }),
@@ -203,14 +207,7 @@ describe('buildRecommendationWindows', () => {
     ]);
 
     expect(windows).toHaveLength(2);
-    expect(windows[0]).toMatchObject({
-      startTimestamp: '2026-10-06T17:00:00',
-      endTimestamp: '2026-10-06T18:00:00',
-    });
-    expect(windows[1]).toMatchObject({
-      startTimestamp: '2026-10-06T19:00:00',
-      endTimestamp: '2026-10-06T20:00:00',
-    });
+    expect(windows.every((window) => window.durationHours === 1)).toBe(true);
   });
 
   it('sorts out-of-order input without mutating the original array', () => {
@@ -222,19 +219,17 @@ describe('buildRecommendationWindows', () => {
     const originalOrder = periods.map((period) => period.weather.timestamp);
 
     const windows = buildRecommendationWindows(periods);
+    const twoHour = windows.filter((window) => window.durationHours === 2);
 
     expect(periods.map((period) => period.weather.timestamp)).toEqual(originalOrder);
-    expect(windows).toHaveLength(1);
-    expect(windows[0]?.startTimestamp).toBe('2026-10-06T17:00:00');
-    expect(windows[0]?.endTimestamp).toBe('2026-10-06T20:00:00');
-    expect(windows[0]?.periods.map((period) => period.weather.timestamp)).toEqual([
+    expect(twoHour[0]?.startTimestamp).toBe('2026-10-06T17:00:00');
+    expect(twoHour[0]?.periods.map((period) => period.weather.timestamp)).toEqual([
       '2026-10-06T17:00:00',
       '2026-10-06T18:00:00',
-      '2026-10-06T19:00:00',
     ]);
   });
 
-  it('groups a sequence of only ACCEPTABLE periods', () => {
+  it('groups a sequence of only ACCEPTABLE periods into practical windows', () => {
     const windows = buildRecommendationWindows([
       createPeriod({
         timestamp: '2026-10-06T10:00:00',
@@ -250,27 +245,22 @@ describe('buildRecommendationWindows', () => {
       }),
     ]);
 
-    expect(windows).toHaveLength(1);
-    expect(windows[0]?.durationHours).toBe(2);
-    expect(windows[0]?.minimumScore).toBe(1.8);
+    const twoHour = windows.filter((window) => window.durationHours === 2);
+    expect(twoHour).toHaveLength(1);
+    expect(twoHour[0]?.minimumScore).toBe(1.8);
   });
 
-  it('groups a sequence of only IDEAL periods', () => {
+  it('does not emit a maximal 3h IDEAL run as a single candidate', () => {
     const windows = buildRecommendationWindows([
       createPeriod({ timestamp: '2026-10-06T07:00:00', status: 'IDEAL' }),
       createPeriod({ timestamp: '2026-10-06T08:00:00', status: 'IDEAL' }),
       createPeriod({ timestamp: '2026-10-06T09:00:00', status: 'IDEAL' }),
     ]);
 
-    expect(windows).toHaveLength(1);
-    expect(windows[0]).toMatchObject({
-      startTimestamp: '2026-10-06T07:00:00',
-      endTimestamp: '2026-10-06T10:00:00',
-      durationHours: 3,
-      averageScore: 3,
-      averagePercentage: 100,
-      minimumScore: 3,
-    });
+    expect(windows.some((window) => window.durationHours === 3)).toBe(false);
+    expect(
+      windows.filter((window) => window.durationHours === PREFERRED_WINDOW_DURATION_HOURS),
+    ).toHaveLength(2);
   });
 
   it('returns no windows when every period is ineligible', () => {
@@ -306,7 +296,38 @@ describe('buildRecommendationWindows', () => {
     ]);
 
     expect(windows).toHaveLength(2);
-    expect(windows[0]?.periods).toHaveLength(1);
-    expect(windows[1]?.periods).toHaveLength(1);
+    expect(windows.every((window) => window.periods.length === 1)).toBe(true);
+  });
+
+  it('does not produce a 24h window from a fully eligible day', () => {
+    const periods = Array.from({ length: 24 }, (_, hour) =>
+      createPeriod({
+        timestamp: `2026-10-09T${String(hour).padStart(2, '0')}:00:00`,
+        status: 'IDEAL',
+        score: 2.9,
+        percentage: 96,
+      }),
+    );
+
+    const windows = buildRecommendationWindows(periods);
+    const twoHour = windows.filter(
+      (window) => window.durationHours === PREFERRED_WINDOW_DURATION_HOURS,
+    );
+
+    expect(windows.some((window) => window.durationHours === 24)).toBe(false);
+    expect(Math.max(...windows.map((window) => window.durationHours))).toBe(
+      PREFERRED_WINDOW_DURATION_HOURS,
+    );
+    expect(twoHour).toHaveLength(23);
+    expect(twoHour[0]).toMatchObject({
+      startTimestamp: '2026-10-09T00:00:00',
+      endTimestamp: '2026-10-09T02:00:00',
+      durationHours: 2,
+    });
+    expect(twoHour[twoHour.length - 1]).toMatchObject({
+      startTimestamp: '2026-10-09T22:00:00',
+      endTimestamp: '2026-10-10T00:00:00',
+      durationHours: 2,
+    });
   });
 });

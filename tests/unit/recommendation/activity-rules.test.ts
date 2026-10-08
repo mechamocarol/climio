@@ -7,8 +7,10 @@ import {
 } from '@/features/recommendation/domain/activity-rules';
 import {
   ALLOW_IDEAL_SINGLE_HOUR_FALLBACK,
+  CHILD_WALK_ACTIVITY_HOURS,
   CLASSIFICATION_THRESHOLDS,
   DAYLIGHT_TIE_TOLERANCE_PERCENTAGE_POINTS,
+  DEFAULT_OUTDOOR_ACTIVITY_HOURS,
   GUST_BLOCKING_THRESHOLD_KM_H,
   MAX_ALTERNATIVE_PERIODS,
   PREFERRED_WINDOW_DURATION_HOURS,
@@ -104,6 +106,16 @@ describe('activity catalog and recommendation configuration integrity', () => {
     }
   });
 
+  it('configures default outdoor activity hours 05–22 except child_walk 06–21', () => {
+    for (const rules of ACTIVITY_RULES) {
+      if (rules.activityId === 'child_walk') {
+        expect(rules.activityHours).toEqual(CHILD_WALK_ACTIVITY_HOURS);
+      } else {
+        expect(rules.activityHours).toEqual(DEFAULT_OUTDOOR_ACTIVITY_HOURS);
+      }
+    }
+  });
+
   it('exposes the documented global recommendation constants', () => {
     expect(CLASSIFICATION_THRESHOLDS.IDEAL).toEqual({ min: 75, max: 100 });
     expect(CLASSIFICATION_THRESHOLDS.ACCEPTABLE).toEqual({ min: 55, max: 74 });
@@ -113,6 +125,8 @@ describe('activity catalog and recommendation configuration integrity', () => {
     expect(ALLOW_IDEAL_SINGLE_HOUR_FALLBACK).toBe(true);
     expect(MAX_ALTERNATIVE_PERIODS).toBe(3);
     expect(DAYLIGHT_TIE_TOLERANCE_PERCENTAGE_POINTS).toBe(5);
+    expect(DEFAULT_OUTDOOR_ACTIVITY_HOURS).toEqual({ startHour: 5, endHour: 22 });
+    expect(CHILD_WALK_ACTIVITY_HOURS).toEqual({ startHour: 6, endHour: 21 });
     expect(STORM_WEATHER_CODES).toEqual([95, 96, 97, 99]);
     expect(SIGNIFICANT_RAIN).toEqual({
       precipitationProbabilityMin: 60,

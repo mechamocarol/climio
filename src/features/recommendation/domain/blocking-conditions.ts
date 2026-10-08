@@ -1,3 +1,4 @@
+import { isWithinActivityHours } from '@/features/recommendation/domain/activity-hours';
 import {
   SIGNIFICANT_RAIN,
   STORM_WEATHER_CODES,
@@ -5,13 +6,13 @@ import {
 import type {
   ActivityRules,
   BlockingCondition,
-  BlockingConditionType,
+  BlockingReason,
 } from '@/features/recommendation/domain/types';
 import type { HourlyWeather } from '@/features/weather/domain/hourly-weather';
 
 export type BlockingEvaluation = Readonly<{
   blocked: boolean;
-  reasons: readonly BlockingConditionType[];
+  reasons: readonly BlockingReason[];
 }>;
 
 function isStormWeatherCode(weatherCode: number): boolean {
@@ -89,16 +90,17 @@ export function evaluateBlockingCondition(
 }
 
 /**
- * Evaluates all blocking conditions declared on the activity.
- * blocked is true iff at least one condition evaluates to true.
- * reasons lists only conditions that blocked, in declaration order, without duplicates.
+ * Evaluates weather blocking conditions and activity-hours eligibility.
+ * blocked is true iff at least one weather condition evaluates to true,
+ * or the timestamp is outside `rules.activityHours`.
+ * reasons lists blockers in declaration order, then `outside_activity_hours`.
  */
 export function evaluateBlockingConditions(
   rules: ActivityRules,
   weather: HourlyWeather,
 ): BlockingEvaluation {
-  const reasons: BlockingConditionType[] = [];
-  const seen = new Set<BlockingConditionType>();
+  const reasons: BlockingReason[] = [];
+  const seen = new Set<BlockingReason>();
 
   for (const condition of rules.blockingConditions) {
     if (evaluateBlockingCondition(condition, weather) !== true) {
@@ -109,6 +111,10 @@ export function evaluateBlockingConditions(
     }
     seen.add(condition.type);
     reasons.push(condition.type);
+  }
+
+  if (!isWithinActivityHours(rules.activityHours, weather.timestamp)) {
+    reasons.push('outside_activity_hours');
   }
 
   return {
