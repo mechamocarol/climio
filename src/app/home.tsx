@@ -1,12 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-  Pressable,
-  ScrollView,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { Pressable, ScrollView, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import {
@@ -36,7 +30,6 @@ export default function HomeScreen() {
   const [activitySheetOpen, setActivitySheetOpen] = useState(false);
   const [locationSheetOpen, setLocationSheetOpen] = useState(false);
   const [dateSheetOpen, setDateSheetOpen] = useState(false);
-  const [nlDraft, setNlDraft] = useState('');
 
   const activityId = usePlanStore((state) => state.activityId);
   const location = usePlanStore((state) => state.location);
@@ -113,29 +106,9 @@ export default function HomeScreen() {
           Qual é o melhor momento para você sair?
         </Text>
         <Text className="mt-2.5 font-sans text-sm leading-5 text-ink-soft">
-          Conte seus planos. A gente encontra a melhor janela no tempo.
+          Escolha a atividade, o local e a data. A gente encontra a melhor
+          janela no tempo.
         </Text>
-
-        <View className="mt-5 min-h-[54px] flex-row items-center rounded-xl border border-line bg-surface px-3.5">
-          <ClimioIcon name="search" size={18} color={colors.inkSoft} />
-          <TextInput
-            value={nlDraft}
-            onChangeText={setNlDraft}
-            placeholder="Ex: correr amanhã no Ibirapuera"
-            placeholderTextColor={colors.gray}
-            editable={false}
-            className="ml-2.5 flex-1 font-sans text-sm text-ink"
-            accessibilityLabel="Busca por linguagem natural (em breve)"
-          />
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="Entrada por voz (em breve)"
-            className="h-9 w-9 items-center justify-center rounded-full bg-surface-soft"
-            disabled
-          >
-            <ClimioIcon name="mic" size={16} color={colors.inkSoft} />
-          </Pressable>
-        </View>
 
         <View className="mt-7 flex-row items-center justify-between">
           <Text className="font-sans text-base font-extrabold text-ink">
