@@ -72,6 +72,21 @@ export type BlockingCondition =
 export type BlockingConditionType = BlockingCondition['type'];
 
 /**
+ * Reasons a period may be ineligible for recommendation windows.
+ * Weather blocking conditions plus activity-hours eligibility.
+ */
+export type BlockingReason = BlockingConditionType | 'outside_activity_hours';
+
+/**
+ * Allowed wall-clock hours for an activity (half-open).
+ * `startHour <= hour < endHour` — e.g. 5–22 allows 05:00 through 21:00.
+ */
+export type ActivityHours = Readonly<{
+  startHour: number;
+  endHour: number;
+}>;
+
+/**
  * Declarative rules for one activity.
  * Contains configuration only — no evaluation functions.
  */
@@ -86,6 +101,11 @@ export type ActivityRules = Readonly<{
   uvBands: ScoreBands | null;
   weights: FactorWeights;
   blockingConditions: readonly BlockingCondition[];
+  /**
+   * Explicit allowed hours for the activity (eligibility, not score).
+   * Independent from prefersDaylight.
+   */
+  activityHours: ActivityHours;
   prefersDaylight: boolean;
 }>;
 
@@ -118,7 +138,7 @@ export type AnalyzedPeriod = Readonly<{
   status: PeriodStatus;
   factors: FactorScoreBreakdown;
   blocked: boolean;
-  blockingReasons: readonly BlockingConditionType[];
+  blockingReasons: readonly BlockingReason[];
 }>;
 
 /** Future engine output contract for a consecutive eligible window. */

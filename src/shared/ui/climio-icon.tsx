@@ -1,16 +1,26 @@
+import { Platform } from 'react-native';
 import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import type { ActivityId } from '@/features/activity/domain/activities';
 
 export type ClimioIconName =
+  | 'alert'
   | 'arrow-left'
   | 'arrow-right'
+  | 'calendar'
   | 'check'
+  | 'chevron-right'
+  | 'close'
   | 'cloud'
+  | 'cloud-rain'
+  | 'compass'
   | 'location'
+  | 'mic'
   | 'moon'
+  | 'partly-cloudy'
   | 'search'
   | 'sun'
+  | 'thermometer'
   | 'wind'
   | ActivityId;
 
@@ -35,8 +45,10 @@ export function ClimioIcon({
       height={size}
       viewBox="0 0 24 24"
       fill="none"
-      accessibilityElementsHidden
-      importantForAccessibility="no-hide-descendants"
+      // Avoid RN a11y props that leak invalid DOM attributes during web SSR.
+      {...(Platform.OS === 'web'
+        ? { focusable: false }
+        : { accessible: false })}
     >
       {renderIcon(name, color)}
     </Svg>
@@ -52,6 +64,19 @@ function renderIcon(name: ClimioIconName, color: string) {
   };
 
   switch (name) {
+    case 'alert':
+      return (
+        <>
+          <Circle cx="12" cy="12" r="9.5" fill={color} stroke="none" />
+          <Path
+            d="M12 7v5.5"
+            stroke="#FFFFFF"
+            strokeWidth={2}
+            strokeLinecap="round"
+          />
+          <Circle cx="12" cy="16.8" r="1.15" fill="#FFFFFF" stroke="none" />
+        </>
+      );
     case 'arrow-left':
       return (
         <>
@@ -66,14 +91,42 @@ function renderIcon(name: ClimioIconName, color: string) {
           <Path d="M5 12h10" {...stroke} />
         </>
       );
+    case 'calendar':
+      return (
+        <>
+          <Rect x="3" y="5" width="18" height="16" rx="3" {...stroke} />
+          <Path d="M8 3v4m8-4v4M3 10h18" {...stroke} />
+        </>
+      );
     case 'check':
       return <Path d="m5 12 4 4L19 6" {...stroke} />;
+    case 'chevron-right':
+      return <Path d="m9 6 6 6-6 6" {...stroke} />;
+    case 'close':
+      return <Path d="M6 6l12 12M18 6 6 18" {...stroke} />;
+    case 'compass':
+      return (
+        <>
+          <Circle cx="12" cy="12" r="9" {...stroke} />
+          <Path d="m14.5 9.5-2 5-5 2 2-5 5-2Z" {...stroke} />
+        </>
+      );
     case 'cloud':
       return (
         <Path
           d="M5 18h13a4 4 0 0 0 .5-8 7 7 0 0 0-13.2 2A3 3 0 0 0 5 18Z"
           {...stroke}
         />
+      );
+    case 'cloud-rain':
+      return (
+        <>
+          <Path
+            d="M5 15h13a4 4 0 0 0 .5-8 7 7 0 0 0-13.2 2A3 3 0 0 0 5 15Z"
+            {...stroke}
+          />
+          <Path d="M8 18v2M12 17v3M16 18v2" {...stroke} />
+        </>
       );
     case 'location':
       return (
@@ -85,12 +138,34 @@ function renderIcon(name: ClimioIconName, color: string) {
           <Circle cx="12" cy="10" r="2.5" {...stroke} />
         </>
       );
+    case 'mic':
+      return (
+        <>
+          <Path d="M12 3a3 3 0 0 1 3 3v5a3 3 0 0 1-6 0V6a3 3 0 0 1 3-3Z" {...stroke} />
+          <Path d="M19 11a7 7 0 0 1-14 0M12 18v3" {...stroke} />
+        </>
+      );
     case 'moon':
       return (
         <Path
           d="M20 15.5A8.5 8.5 0 0 1 8.5 4 8.5 8.5 0 1 0 20 15.5Z"
           {...stroke}
         />
+      );
+    case 'partly-cloudy':
+      return (
+        <>
+          <Circle cx="16" cy="7" r="2.5" {...stroke} />
+          <Path
+            d="M16 2.5v1.2m3.2 1.1-0.9 0.9M20.5 7h-1.2m-0.9 3.2-0.9-0.9"
+            {...stroke}
+          />
+          <Path
+            d="M5 18h12a3.5 3.5 0 0 0 .4-7 6 6 0 0 0-11.4 1.8A2.7 2.7 0 0 0 5 18Z"
+            {...stroke}
+          />
+          <Path d="M7 20.5h6M9 22h3" {...stroke} />
+        </>
       );
     case 'search':
       return (
@@ -107,6 +182,16 @@ function renderIcon(name: ClimioIconName, color: string) {
             d="M12 2v2m0 16v2M4.9 4.9l1.4 1.4m11.4 11.4 1.4 1.4M2 12h2m16 0h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"
             {...stroke}
           />
+        </>
+      );
+    case 'thermometer':
+      return (
+        <>
+          <Path
+            d="M14 14.5V5.5a2.5 2.5 0 0 0-5 0v9a3.5 3.5 0 1 0 5 0Z"
+            {...stroke}
+          />
+          <Path d="M11.5 16.5v-7" {...stroke} />
         </>
       );
     case 'wind':

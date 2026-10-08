@@ -68,9 +68,11 @@ export function ThemeProvider({
   const [veilColor, setVeilColor] = useState<string | null>(null);
   const themeRef = useRef(theme);
   const isTransitioningRef = useRef(false);
-  const veilOpacity = useRef(new Animated.Value(0)).current;
+  const [veilOpacity] = useState(() => new Animated.Value(0));
 
-  themeRef.current = theme;
+  useEffect(() => {
+    themeRef.current = theme;
+  }, [theme]);
 
   useEffect(() => {
     let mounted = true;
@@ -200,7 +202,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   veil: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 100,
   },
 });

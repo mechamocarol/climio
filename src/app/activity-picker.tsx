@@ -94,7 +94,7 @@ export default function ActivityPickerScreen() {
                   }
 
                   setActivityId(item.id);
-                  router.push('/location-picker');
+                  router.replace('/home');
                 }}
               >
                 <View

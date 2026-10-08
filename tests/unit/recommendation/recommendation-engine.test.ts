@@ -37,6 +37,27 @@ function idealRunningHour(timestamp: string, overrides: Partial<HourlyWeather> =
   });
 }
 
+/** Ideal child_walk hour (all weighted factors score 3, including UV). */
+function idealChildWalkHour(
+  timestamp: string,
+  overrides: Partial<HourlyWeather> = {},
+): HourlyWeather {
+  return createWeather({
+    timestamp,
+    temperature: 22,
+    precipitationProbability: 5,
+    windSpeed: 10,
+    uvIndex: 2,
+    weatherCode: 1,
+    isDaylight: true,
+    ...overrides,
+  });
+}
+
+function hourFromTimestamp(timestamp: string): number {
+  return Number(/T(\d{2}):/.exec(timestamp)?.[1]);
+}
+
 describe('recommendActivity', () => {
   const runningRules = getActivityRules('running');
 
@@ -208,4 +229,233 @@ describe('recommendActivity', () => {
     expect(weather).toEqual(weatherSnapshot);
     expect(runningRules).toEqual(rulesSnapshot);
   });
+
+  it('does not recommend a 24h window when the whole day is eligible', () => {
+    const weather = Array.from({ length: 24 }, (_, hour) =>
+      idealRunningHour(
+        `2026-10-09T${String(hour).padStart(2, '0')}:00:00`,
+      ),
+    );
+
+    const result = recommendActivity({ weather, rules: runningRules });
+
+    expect(result.recommendation).not.toBeNull();
+    expect(result.recommendation?.durationHours).toBe(2);
+    expect(result.recommendation?.durationHours).not.toBe(24);
+  });
+
+  it('selects the higher-scoring practical 2h window over a weaker one', () => {
+    const weather = [
+      // Weaker morning stretch
+      idealRunningHour('2026-10-09T08:00:00', {
+        temperature: 18,
+        windSpeed: 18,
+      }),
+      idealRunningHour('2026-10-09T09:00:00', {
+        temperature: 18,
+        windSpeed: 18,
+      }),
+      // Stronger afternoon stretch
+      idealRunningHour('2026-10-09T17:00:00'),
+      idealRunningHour('2026-10-09T18:00:00'),
+    ];
+
+    const result = recommendActivity({ weather, rules: runningRules });
+
+    expect(result.recommendation?.startTimestamp).toBe('2026-10-09T17:00:00');
+    expect(result.recommendation?.endTimestamp).toBe('2026-10-09T19:00:00');
+    expect(result.recommendation?.durationHours).toBe(2);
+  });
+
+  it('falls back to a 1h window when no practical 2h window exists', () => {
+    const weather = [
+      idealRunningHour('2026-10-09T10:00:00'),
+      // gap — no consecutive pair
+      idealRunningHour('2026-10-09T14:00:00', {
+        temperature: 18,
+        windSpeed: 18,
+      }),
+    ];
+
+    const result = recommendActivity({ weather, rules: runningRules });
+
+    expect(result.recommendation?.durationHours).toBe(1);
+    expect(result.recommendation?.startTimestamp).toBe('2026-10-09T10:00:00');
+  });
+
+  it('keeps daylight preference within tolerance for practical windows', () => {
+    expect(runningRules.prefersDaylight).toBe(true);
+
+    const weather = [
+      // Slightly better night window (within 5pp of daytime)
+      idealRunningHour('2026-10-09T20:00:00', {
+        windSpeed: 8,
+        isDaylight: false,
+      }),
+      idealRunningHour('2026-10-09T21:00:00', {
+        windSpeed: 8,
+        isDaylight: false,
+      }),
+      // Daytime window — preferred inside daylight tolerance
+      idealRunningHour('2026-10-09T10:00:00', {
+        windSpeed: 14,
+        isDaylight: true,
+      }),
+      idealRunningHour('2026-10-09T11:00:00', {
+        windSpeed: 14,
+        isDaylight: true,
+      }),
+    ];
+
+    const result = recommendActivity({ weather, rules: runningRules });
+
+    expect(result.recommendation?.startTimestamp).toBe('2026-10-09T10:00:00');
+    expect(result.recommendation?.durationHours).toBe(2);
+  });
+
+
+  it('returns alternatives that do not overlap the main practical window', () => {
+    const weather = [
+      idealRunningHour('2026-10-09T08:00:00'),
+      idealRunningHour('2026-10-09T09:00:00'),
+      idealRunningHour('2026-10-09T12:00:00'),
+      idealRunningHour('2026-10-09T13:00:00'),
+      idealRunningHour('2026-10-09T17:00:00'),
+      idealRunningHour('2026-10-09T18:00:00'),
+    ];
+
+    const result = recommendActivity({ weather, rules: runningRules });
+
+    expect(result.recommendation).not.toBeNull();
+    for (const alternative of result.alternatives) {
+      expect(alternative).not.toBe(result.recommendation);
+      const main = result.recommendation!;
+      const overlaps =
+        alternative.startTimestamp < main.endTimestamp &&
+        main.startTimestamp < alternative.endTimestamp;
+      expect(overlaps).toBe(false);
+    }
+  });
+
+  it('does not recommend overnight hours when a worse but allowed window exists', () => {
+    const weather = [
+      // Perfect overnight climate — outside default outdoor hours (05–22)
+      ...Array.from({ length: 5 }, (_, hour) =>
+        idealRunningHour(`2026-10-09T0${hour}:00:00`),
+      ),
+      // Allowed window — slightly worse but still eligible
+      idealRunningHour('2026-10-09T06:00:00', { windSpeed: 18 }),
+      idealRunningHour('2026-10-09T07:00:00', { windSpeed: 18 }),
+    ];
+
+    const result = recommendActivity({ weather, rules: runningRules });
+
+    expect(result.recommendation).not.toBeNull();
+    expect(result.recommendation?.startTimestamp).toBe('2026-10-09T06:00:00');
+    expect(result.recommendation?.durationHours).toBe(2);
+    expect(hourFromTimestamp(result.recommendation!.startTimestamp)).toBeGreaterThanOrEqual(5);
+    expect(hourFromTimestamp(result.recommendation!.startTimestamp)).toBeLessThan(22);
+  });
+
+  it('keeps all recommendation windows inside activity hours for child_walk', () => {
+    const childRules = getActivityRules('child_walk');
+    const weather = Array.from({ length: 24 }, (_, hour) =>
+      idealChildWalkHour(
+        `2026-10-09T${String(hour).padStart(2, '0')}:00:00`,
+      ),
+    );
+
+    const result = recommendActivity({ weather, rules: childRules });
+    const main = result.recommendation;
+
+    expect(main).not.toBeNull();
+    expect(main!.durationHours).toBe(2);
+
+    const forbiddenStarts = [0, 1, 2, 3, 4, 5, 21, 22, 23];
+    expect(forbiddenStarts).not.toContain(hourFromTimestamp(main!.startTimestamp));
+
+    for (const period of main!.periods) {
+      const hour = hourFromTimestamp(period.weather.timestamp);
+      expect(hour).toBeGreaterThanOrEqual(6);
+      expect(hour).toBeLessThan(21);
+    }
+
+    for (const alternative of result.alternatives) {
+      for (const period of alternative.periods) {
+        const hour = hourFromTimestamp(period.weather.timestamp);
+        expect(hour).toBeGreaterThanOrEqual(6);
+        expect(hour).toBeLessThan(21);
+      }
+    }
+  });
+
+  it('returns alternatives that do not overlap the main window or each other', () => {
+    const weather = Array.from({ length: 10 }, (_, hour) =>
+      idealRunningHour(`2026-10-07T${String(hour + 8).padStart(2, '0')}:00:00`),
+    );
+
+    const result = recommendActivity({ weather, rules: runningRules });
+    const main = result.recommendation;
+
+    expect(main).not.toBeNull();
+    expect(result.alternatives).not.toContain(main);
+
+    for (const alternative of result.alternatives) {
+      expect(alternative.startTimestamp < main!.endTimestamp && main!.startTimestamp < alternative.endTimestamp).toBe(
+        false,
+      );
+    }
+
+    for (let i = 0; i < result.alternatives.length; i += 1) {
+      for (let j = i + 1; j < result.alternatives.length; j += 1) {
+        const a = result.alternatives[i]!;
+        const b = result.alternatives[j]!;
+        const overlaps =
+          a.startTimestamp < b.endTimestamp && b.startTimestamp < a.endTimestamp;
+        expect(overlaps).toBe(false);
+      }
+    }
+
+    const starts = result.alternatives.map((window) => window.startTimestamp);
+    expect(new Set(starts).size).toBe(starts.length);
+  });
+
+  it('never builds a 2h window that includes a forbidden hour', () => {
+    const childRules = getActivityRules('child_walk');
+    const weather = [
+      idealChildWalkHour('2026-10-09T05:00:00'),
+      idealChildWalkHour('2026-10-09T06:00:00'),
+      idealChildWalkHour('2026-10-09T07:00:00'),
+      idealChildWalkHour('2026-10-09T20:00:00'),
+      idealChildWalkHour('2026-10-09T21:00:00'),
+    ];
+
+    const result = recommendActivity({ weather, rules: childRules });
+    const windows = [
+      result.recommendation,
+      ...result.alternatives,
+    ].filter((window): window is NonNullable<typeof window> => window !== null);
+
+    expect(windows.length).toBeGreaterThan(0);
+    for (const window of windows) {
+      for (const period of window.periods) {
+        const hour = hourFromTimestamp(period.weather.timestamp);
+        expect(hour).toBeGreaterThanOrEqual(6);
+        expect(hour).toBeLessThan(21);
+      }
+    }
+
+    // 05:00 and 21:00 are analyzed but blocked / ineligible
+    const five = result.analyzedPeriods.find(
+      (period) => period.weather.timestamp === '2026-10-09T05:00:00',
+    );
+    const twentyOne = result.analyzedPeriods.find(
+      (period) => period.weather.timestamp === '2026-10-09T21:00:00',
+    );
+    expect(five?.blocked).toBe(true);
+    expect(five?.blockingReasons).toContain('outside_activity_hours');
+    expect(twentyOne?.blocked).toBe(true);
+    expect(twentyOne?.blockingReasons).toContain('outside_activity_hours');
+  });
 });
+

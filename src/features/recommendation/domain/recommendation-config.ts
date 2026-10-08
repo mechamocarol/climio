@@ -8,11 +8,34 @@ export const CLASSIFICATION_THRESHOLDS = {
   INADEQUATE: { min: 0, max: 34 },
 } as const satisfies Record<PeriodStatus, Readonly<{ min: number; max: number }>>;
 
-/** Prefer consecutive windows of at least this many hours. */
+/**
+ * Practical recommendation window length (hours).
+ * C4 emits sliding candidates of this size from each eligible run;
+ * C5 prefers the pool of windows with `durationHours >=` this value,
+ * falling back to 1h windows when none exist.
+ */
 export const PREFERRED_WINDOW_DURATION_HOURS = 2;
 
 /** Allow recommending a single IDEAL hour when no 2-hour window exists. */
 export const ALLOW_IDEAL_SINGLE_HOUR_FALLBACK = true;
+
+/**
+ * Default allowed hours for outdoor MVP activities (half-open).
+ * 05:00 inclusive → 22:00 exclusive.
+ */
+export const DEFAULT_OUTDOOR_ACTIVITY_HOURS = {
+  startHour: 5,
+  endHour: 22,
+} as const;
+
+/**
+ * More conservative allowed hours for child_walk (half-open).
+ * 06:00 inclusive → 21:00 exclusive.
+ */
+export const CHILD_WALK_ACTIVITY_HOURS = {
+  startHour: 6,
+  endHour: 21,
+} as const;
 
 /** Maximum number of alternative windows shown alongside the primary recommendation. */
 export const MAX_ALTERNATIVE_PERIODS = 3;

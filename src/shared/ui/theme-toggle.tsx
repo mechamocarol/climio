@@ -18,7 +18,7 @@ export function ThemeToggle() {
         isLight ? 'Ativar tema escuro' : 'Ativar tema claro'
       }
       accessibilityState={{ selected: !isLight }}
-      className="h-[42px] w-[42px] items-center justify-center rounded-md border border-line bg-surface active:opacity-90"
+      className="h-[42px] w-[42px] items-center justify-center rounded-full border border-line bg-surface active:opacity-90"
       onPress={toggleTheme}
     >
       <ClimioIcon

@@ -1,4 +1,4 @@
-import { useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -26,11 +26,20 @@ function formatLocationSubtitle(location: Location): string {
 
 export default function LocationPickerScreen() {
   const router = useRouter();
+  const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { colors } = useClimioTheme();
   const [query, setQuery] = useState('');
   const selectedLocation = usePlanStore((state) => state.location);
   const setLocation = usePlanStore((state) => state.setLocation);
   const search = useSearchLocations(query);
+
+  function finishLocationSelection() {
+    if (returnTo === 'home') {
+      router.replace('/home');
+      return;
+    }
+    router.push('/date-picker');
+  }
 
   const trimmedQuery = query.trim();
   const showIdle = trimmedQuery.length === 0;
@@ -110,7 +119,7 @@ export default function LocationPickerScreen() {
             <Pressable
               accessibilityRole="button"
               className="min-h-[48px] flex-row items-center justify-center rounded-lg bg-green px-5 active:opacity-90"
-              onPress={() => router.push('/date-picker')}
+              onPress={finishLocationSelection}
             >
               <Text
                 className="font-sans text-[13px] font-extrabold"
@@ -196,7 +205,7 @@ export default function LocationPickerScreen() {
                   }`}
                   onPress={() => {
                     setLocation(item);
-                    router.push('/date-picker');
+                    finishLocationSelection();
                   }}
                 >
                   <View className="h-10 w-10 items-center justify-center rounded-md bg-surface-blue">

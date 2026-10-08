@@ -283,7 +283,8 @@ Conceitualmente:
   gustRules,
   uvRules,
   weights,
-  blockingRules
+  blockingRules,
+  activityHours
 }
 
 Isso permite adicionar ou alterar atividades sem espalhar regras pelos componentes.
@@ -300,10 +301,14 @@ Para cada horário:
 2. Identificar os fatores relevantes para a atividade.
 3. Calcular os scores individuais.
 4. Aplicar pesos.
-5. Aplicar regras de bloqueio.
-6. Calcular o score final.
-7. Classificar o período.
-8. Registrar os fatores que influenciaram o resultado.
+5. Aplicar regras de bloqueio meteorológico.
+6. Verificar se o horário está dentro de `activityHours` da atividade.
+7. Calcular o score final.
+8. Classificar o período.
+9. Registrar os fatores que influenciaram o resultado.
+
+Horas fora de `activityHours` são inelegíveis para formar janelas de recomendação
+(ver §18.1), independentemente do score meteorológico.
 
 ---
 
@@ -415,6 +420,44 @@ As regras de bloqueio são específicas por atividade.
 
 Não criar uma regra universal de bloqueio climático.
 
+## 18.1 Horário permitido da atividade (`activityHours`)
+
+Além dos bloqueios meteorológicos, cada atividade declara uma faixa explícita de
+horários em que pode ser recomendada:
+
+```text
+activityHours: { startHour, endHour }
+```
+
+Semântica (intervalo meio-aberto):
+
+```text
+startHour <= hour < endHour
+```
+
+Exemplos:
+
+- regra 05–22 → 05:00 permitido; 21:00 permitido; 22:00 **não** permitido;
+- regra 06–21 (`child_walk`) → 06:00 permitido; 20:00 permitido; 21:00 **não** permitido.
+
+MVP:
+
+- atividades externas padrão: **05:00 ≤ horário < 22:00**;
+- passeio com criança (`child_walk`): **06:00 ≤ horário < 21:00**.
+
+Importante — separar de daylight (§38):
+
+- **horário permitido** é restrição de elegibilidade da atividade;
+- **não** entra no score meteorológico;
+- **não** é o mesmo que preferência por luz do dia;
+- horas fora da faixa **não participam** da formação de janelas (C4) nem das alternativas;
+- daylight continua apenas como critério contextual de desempate em C5;
+- daylight **não** substitui `activityHours`;
+- não inferir "segurança noturna" apenas porque `isDaylight === false`.
+
+A verificação ocorre na análise por período (antes de C4). C4 permanece genérico:
+só agrupa períodos já elegíveis (`IDEAL` / `ACCEPTABLE`, não bloqueados).
+
 Não criar regra de "piso molhado": a API não fornece essa informação de forma confiável, e o sistema não deve inferi-la.
 
 Weather codes podem identificar condições de tempestade/severidade quando disponíveis.
@@ -487,10 +530,12 @@ O resultado pode apresentar até 3 alternativas à recomendação principal.
 Regras:
 
 - máximo de 3 alternativas;
-- não repetir horários que façam parte da recomendação principal;
+- não repetir a janela principal;
+- não sobrepor a recomendação principal (intervalos meio-abertos `[start, end)`);
+- não sobrepor outras alternativas já selecionadas (tocar no endpoint é permitido);
 - usar os mesmos critérios de elegibilidade;
 - aceitar apenas IDEAL ou ACCEPTABLE;
-- ordenar por qualidade/score;
+- ordenar por qualidade/score de forma determinística, depois escolher guloso sem overlap;
 - se houver menos de 3, mostrar apenas as disponíveis;
 - se não houver alternativas, não exibir a seção.
 
@@ -1632,11 +1677,15 @@ Não inferir segurança noturna.
 
 Não transformar "é noite" automaticamente em bloqueio.
 
+A restrição de horários permitidos da atividade é outra regra — ver §18.1 (`activityHours`).
+Daylight **não** substitui `activityHours`.
+
 Separar explicitamente:
 
 - **Score meteorológico** → qualidade das condições;
 - **Daylight** → contexto/preferência;
-- **Blocking conditions** → elegibilidade.
+- **Blocking conditions** → elegibilidade meteorológica;
+- **activityHours** → elegibilidade por horário permitido da atividade.
 
 ---
 

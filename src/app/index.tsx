@@ -1,75 +1,109 @@
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { useEffect, useState } from 'react';
+import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import {
+  hasCompletedWelcome,
+  markWelcomeCompleted,
+} from '@/features/onboarding/storage/welcome-storage';
 import { useClimioTheme } from '@/providers/theme-provider';
 import { lightColors } from '@/shared/theme/tokens';
 import { ClimioIcon } from '@/shared/ui/climio-icon';
-import { ThemeToggle } from '@/shared/ui/theme-toggle';
 
 /** White glyph/text on green brand fills — same in Light and Dark (Figma). */
 const onGreen = lightColors.surface;
 
-export default function IndexScreen() {
+/**
+ * App entry: welcome only on first access; later launches go straight to home.
+ */
+export default function EntryScreen() {
   const router = useRouter();
   const { colors } = useClimioTheme();
+  const [checking, setChecking] = useState(true);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      try {
+        const completed = await hasCompletedWelcome();
+        if (cancelled) {
+          return;
+        }
+        if (completed) {
+          router.replace('/home');
+          return;
+        }
+        setShowWelcome(true);
+      } finally {
+        if (!cancelled) {
+          setChecking(false);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
+
+  async function handleStartPlan() {
+    await markWelcomeCompleted();
+    router.replace('/home');
+  }
+
+  if (checking || !showWelcome) {
+    return (
+      <SafeAreaView className="flex-1 items-center justify-center bg-canvas">
+        <ActivityIndicator color={colors.green} size="large" />
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView className="flex-1 bg-canvas">
       <View className="absolute -right-24 -top-28 h-60 w-60 rounded-full bg-blue opacity-20" />
       <View className="absolute -bottom-28 -left-24 h-52 w-52 rounded-full bg-green-bright opacity-20" />
 
-      <View className="flex-1 justify-between px-5 pb-7 pt-3">
-        <View>
-          <View className="mb-8 flex-row items-center justify-between">
-            <View className="flex-row items-center gap-2.5">
-              <View className="h-9 w-9 items-center justify-center rounded-sm bg-green">
-                <ClimioIcon name="wind" size={18} color={onGreen} />
-              </View>
-              <Text className="font-sans text-[21px] font-extrabold tracking-tight text-ink">
-                climio
-              </Text>
+      <View className="flex-1 justify-between px-6 pb-8 pt-10">
+        <View className="flex-1 items-center justify-center px-2">
+          <View className="h-[88px] w-[88px] items-center justify-center rounded-xl bg-surface-soft">
+            <View className="h-[58px] w-[58px] items-center justify-center rounded-full border-2 border-green">
+              <ClimioIcon name="compass" size={28} color={colors.green} />
             </View>
-            <ThemeToggle />
           </View>
 
-          <View className="gap-3">
-            <Text className="font-sans text-[10px] font-extrabold uppercase tracking-[1.65px] text-green">
-              Previsão para a vida real
-            </Text>
-            <Text className="font-sans text-[31px] font-extrabold leading-[1.14] tracking-tight text-ink">
-              Find your best time to go.
-            </Text>
-            <Text className="max-w-[320px] font-sans text-sm leading-6 text-ink-soft">
-              Escolha a atividade, o lugar e o dia. A gente analisa a previsão
-              hora a hora e encontra a melhor janela para você sair.
-            </Text>
-          </View>
+          <Text className="mt-8 font-sans text-[10px] font-extrabold uppercase tracking-[1.65px] text-green">
+            Comece por aqui
+          </Text>
+          <Text className="mt-3 text-center font-sans text-[30px] font-extrabold leading-tight tracking-tight text-ink">
+            Seu próximo plano merece o momento certo
+          </Text>
+          <Text className="mt-4 max-w-[300px] text-center font-sans text-[15px] leading-6 text-ink-soft">
+            Escolha uma atividade, um lugar e uma data para receber uma
+            recomendação feita para você.
+          </Text>
         </View>
 
-        <View className="gap-3.5">
-          <Pressable
-            accessibilityRole="button"
-            className="min-h-[54px] flex-row items-center justify-center rounded-lg bg-green px-5 active:opacity-90"
-            onPress={() => router.push('/activity-picker')}
+        <Pressable
+          accessibilityRole="button"
+          className="min-h-[54px] flex-row items-center justify-center rounded-lg bg-green px-5 active:opacity-90"
+          onPress={() => {
+            void handleStartPlan();
+          }}
+        >
+          <Text
+            className="font-sans text-[14px] font-extrabold"
+            style={{ color: onGreen }}
           >
-            <Text
-              className="font-sans text-[13px] font-extrabold"
-              style={{ color: onGreen }}
-            >
-              Começar
-            </Text>
-            <View className="ml-3">
-              <ClimioIcon name="arrow-right" size={18} color={onGreen} />
-            </View>
-          </Pressable>
-          <View className="flex-row items-center justify-center gap-2">
-            <ClimioIcon name="cloud" size={15} color={colors.blue} />
-            <Text className="font-sans text-[10px] text-ink-soft">
-              Sem complicação — só o melhor momento para o seu plano.
-            </Text>
+            Montar meu plano
+          </Text>
+          <View className="ml-2">
+            <ClimioIcon name="arrow-right" size={18} color={onGreen} />
           </View>
-        </View>
+        </Pressable>
       </View>
     </SafeAreaView>
   );
