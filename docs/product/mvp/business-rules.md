@@ -438,12 +438,12 @@ startHour <= hour < endHour
 Exemplos:
 
 - regra 05–22 → 05:00 permitido; 21:00 permitido; 22:00 **não** permitido;
-- regra 06–21 (`child_walk`) → 06:00 permitido; 20:00 permitido; 21:00 **não** permitido.
+- regra 08–21 (`child_walk`) → 08:00 permitido; 20:00 permitido; 21:00 **não** permitido.
 
 MVP:
 
 - atividades externas padrão: **05:00 ≤ horário < 22:00**;
-- passeio com criança (`child_walk`): **06:00 ≤ horário < 21:00**.
+- passeio com criança (`child_walk`): **08:00 ≤ horário < 21:00**.
 
 Importante — separar de daylight (§38):
 
@@ -529,18 +529,18 @@ A seleção deve ser determinística.
 
 ## 20.1 Próximos melhores horários
 
-O resultado pode apresentar até 3 alternativas à recomendação principal.
+O resultado pode apresentar até 5 alternativas à recomendação principal.
 
 Regras:
 
-- máximo de 3 alternativas;
+- máximo de 5 alternativas;
 - não repetir a janela principal;
 - não sobrepor a recomendação principal (intervalos meio-abertos `[start, end)`);
 - não sobrepor outras alternativas já selecionadas (tocar no endpoint é permitido);
 - usar os mesmos critérios de elegibilidade;
 - aceitar apenas IDEAL ou ACCEPTABLE;
 - ordenar por qualidade/score de forma determinística, depois escolher guloso sem overlap;
-- se houver menos de 3, mostrar apenas as disponíveis;
+- se houver menos de 5, mostrar apenas as disponíveis;
 - se não houver alternativas, não exibir a seção.
 
 As alternativas devem ser reais e derivadas dos dados analisados, nunca mockadas ou fixas.
@@ -1829,7 +1829,7 @@ Mais detalhadamente, o resultado deve permitir apresentar:
 - score e percentual de cada período;
 - status de cada período;
 - melhor janela (ou `null`);
-- até 3 alternativas elegíveis;
+- até 5 alternativas elegíveis;
 - fatores relevantes à explicação (derivados do resultado; não influenciam a escolha);
 - explicação semântica com categorias opcionais positivo / neutro / negativo, com copy gerada na apresentação;
 - ausência de recomendação quando aplicável;

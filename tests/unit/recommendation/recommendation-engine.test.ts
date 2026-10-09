@@ -371,19 +371,19 @@ describe('recommendActivity', () => {
     expect(main).not.toBeNull();
     expect(main!.durationHours).toBe(2);
 
-    const forbiddenStarts = [0, 1, 2, 3, 4, 5, 21, 22, 23];
+    const forbiddenStarts = [0, 1, 2, 3, 4, 5, 6, 7, 21, 22, 23];
     expect(forbiddenStarts).not.toContain(hourFromTimestamp(main!.startTimestamp));
 
     for (const period of main!.periods) {
       const hour = hourFromTimestamp(period.weather.timestamp);
-      expect(hour).toBeGreaterThanOrEqual(6);
+      expect(hour).toBeGreaterThanOrEqual(8);
       expect(hour).toBeLessThan(21);
     }
 
     for (const alternative of result.alternatives) {
       for (const period of alternative.periods) {
         const hour = hourFromTimestamp(period.weather.timestamp);
-        expect(hour).toBeGreaterThanOrEqual(6);
+        expect(hour).toBeGreaterThanOrEqual(8);
         expect(hour).toBeLessThan(21);
       }
     }
@@ -423,9 +423,9 @@ describe('recommendActivity', () => {
   it('never builds a 2h window that includes a forbidden hour', () => {
     const childRules = getActivityRules('child_walk');
     const weather = [
-      idealChildWalkHour('2026-10-09T05:00:00'),
-      idealChildWalkHour('2026-10-09T06:00:00'),
       idealChildWalkHour('2026-10-09T07:00:00'),
+      idealChildWalkHour('2026-10-09T08:00:00'),
+      idealChildWalkHour('2026-10-09T09:00:00'),
       idealChildWalkHour('2026-10-09T20:00:00'),
       idealChildWalkHour('2026-10-09T21:00:00'),
     ];
@@ -440,20 +440,20 @@ describe('recommendActivity', () => {
     for (const window of windows) {
       for (const period of window.periods) {
         const hour = hourFromTimestamp(period.weather.timestamp);
-        expect(hour).toBeGreaterThanOrEqual(6);
+        expect(hour).toBeGreaterThanOrEqual(8);
         expect(hour).toBeLessThan(21);
       }
     }
 
-    // 05:00 and 21:00 are analyzed but blocked / ineligible
-    const five = result.analyzedPeriods.find(
-      (period) => period.weather.timestamp === '2026-10-09T05:00:00',
+    // 07:00 and 21:00 are analyzed but blocked / ineligible
+    const seven = result.analyzedPeriods.find(
+      (period) => period.weather.timestamp === '2026-10-09T07:00:00',
     );
     const twentyOne = result.analyzedPeriods.find(
       (period) => period.weather.timestamp === '2026-10-09T21:00:00',
     );
-    expect(five?.blocked).toBe(true);
-    expect(five?.blockingReasons).toContain('outside_activity_hours');
+    expect(seven?.blocked).toBe(true);
+    expect(seven?.blockingReasons).toContain('outside_activity_hours');
     expect(twentyOne?.blocked).toBe(true);
     expect(twentyOne?.blockingReasons).toContain('outside_activity_hours');
   });
@@ -623,9 +623,9 @@ describe('recommendActivity', () => {
       const result = recommendActivity({
         weather: [
           idealChildWalkHour('2026-10-07T05:00'),
-          idealChildWalkHour('2026-10-07T06:00'),
           idealChildWalkHour('2026-10-07T07:00'),
-          idealChildWalkHour('2026-10-07T20:00'),
+          idealChildWalkHour('2026-10-07T08:00'),
+          idealChildWalkHour('2026-10-07T09:00'),
           idealChildWalkHour('2026-10-07T21:00'),
         ],
         rules: childRules,
@@ -636,7 +636,7 @@ describe('recommendActivity', () => {
       expect(result.recommendation).not.toBeNull();
       for (const period of result.recommendation!.periods) {
         const hour = hourFromTimestamp(period.weather.timestamp);
-        expect(hour).toBeGreaterThanOrEqual(6);
+        expect(hour).toBeGreaterThanOrEqual(8);
         expect(hour).toBeLessThan(21);
       }
     });

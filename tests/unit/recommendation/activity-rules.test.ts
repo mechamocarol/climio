@@ -123,10 +123,10 @@ describe('activity catalog and recommendation configuration integrity', () => {
     expect(CLASSIFICATION_THRESHOLDS.INADEQUATE).toEqual({ min: 0, max: 34 });
     expect(PREFERRED_WINDOW_DURATION_HOURS).toBe(2);
     expect(ALLOW_IDEAL_SINGLE_HOUR_FALLBACK).toBe(true);
-    expect(MAX_ALTERNATIVE_PERIODS).toBe(3);
+    expect(MAX_ALTERNATIVE_PERIODS).toBe(5);
     expect(DAYLIGHT_TIE_TOLERANCE_PERCENTAGE_POINTS).toBe(5);
     expect(DEFAULT_OUTDOOR_ACTIVITY_HOURS).toEqual({ startHour: 5, endHour: 22 });
-    expect(CHILD_WALK_ACTIVITY_HOURS).toEqual({ startHour: 6, endHour: 21 });
+    expect(CHILD_WALK_ACTIVITY_HOURS).toEqual({ startHour: 8, endHour: 21 });
     expect(STORM_WEATHER_CODES).toEqual([95, 96, 97, 99]);
     expect(SIGNIFICANT_RAIN).toEqual({
       precipitationProbabilityMin: 60,

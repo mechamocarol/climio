@@ -175,7 +175,7 @@ describe('selectAlternativeWindows', () => {
     expect(selectAlternativeWindows([main, alt], main)).toEqual([alt]);
   });
 
-  it('returns fewer than 3 alternatives when that is all that remains', () => {
+  it('returns fewer than 5 alternatives when that is all that remains', () => {
     const main = createWindow({
       startTimestamp: '2026-10-06T08:00:00',
       endTimestamp: '2026-10-06T10:00:00',
@@ -201,7 +201,7 @@ describe('selectAlternativeWindows', () => {
     expect(selectAlternativeWindows([main, a, b], main)).toEqual([b, a]);
   });
 
-  it('limits alternatives to a maximum of 3', () => {
+  it('limits alternatives to a maximum of 5', () => {
     const main = createWindow({
       startTimestamp: '2026-10-06T06:00:00',
       endTimestamp: '2026-10-06T08:00:00',
@@ -209,7 +209,7 @@ describe('selectAlternativeWindows', () => {
       averageScore: 3,
       minimumScore: 3,
     });
-    const alts = [1, 2, 3, 4].map((n) =>
+    const alts = [1, 2, 3, 4, 5, 6].map((n) =>
       createWindow({
         startTimestamp: `2026-10-06T${String(8 + n * 2).padStart(2, '0')}:00:00`,
         endTimestamp: `2026-10-06T${String(10 + n * 2).padStart(2, '0')}:00:00`,
@@ -220,8 +220,8 @@ describe('selectAlternativeWindows', () => {
     );
 
     const result = selectAlternativeWindows([main, ...alts], main);
-    expect(result).toHaveLength(3);
-    expect(result).toEqual([alts[0], alts[1], alts[2]]);
+    expect(result).toHaveLength(5);
+    expect(result).toEqual([alts[0], alts[1], alts[2], alts[3], alts[4]]);
   });
 
   it('excludes the mainWindow itself', () => {

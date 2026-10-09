@@ -32,15 +32,15 @@ export const DEFAULT_OUTDOOR_ACTIVITY_HOURS = {
 
 /**
  * More conservative allowed hours for child_walk (half-open).
- * 06:00 inclusive → 21:00 exclusive.
+ * 08:00 inclusive → 21:00 exclusive.
  */
 export const CHILD_WALK_ACTIVITY_HOURS = {
-  startHour: 6,
+  startHour: 8,
   endHour: 21,
 } as const;
 
 /** Maximum number of alternative windows shown alongside the primary recommendation. */
-export const MAX_ALTERNATIVE_PERIODS = 3;
+export const MAX_ALTERNATIVE_PERIODS = 5;
 
 /**
  * Daylight preference may apply when two options differ by at most this many

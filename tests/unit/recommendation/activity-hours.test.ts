@@ -49,15 +49,16 @@ describe('isWithinActivityHours — default outdoor 05–22', () => {
   });
 });
 
-describe('isWithinActivityHours — child_walk 06–21', () => {
+describe('isWithinActivityHours — child_walk 08–21', () => {
   const hours = CHILD_WALK_ACTIVITY_HOURS;
 
-  it('allows 06:00 and 20:00', () => {
-    expect(isWithinActivityHours(hours, '2026-10-09T06:00:00')).toBe(true);
+  it('allows 08:00 and 20:00', () => {
+    expect(isWithinActivityHours(hours, '2026-10-09T08:00:00')).toBe(true);
     expect(isWithinActivityHours(hours, '2026-10-09T20:00:00')).toBe(true);
   });
 
-  it('rejects 21:00 and 02:00', () => {
+  it('rejects 07:00, 21:00 and 02:00', () => {
+    expect(isWithinActivityHours(hours, '2026-10-09T07:00:00')).toBe(false);
     expect(isWithinActivityHours(hours, '2026-10-09T21:00:00')).toBe(false);
     expect(isWithinActivityHours(hours, '2026-10-09T02:00:00')).toBe(false);
   });
